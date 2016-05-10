@@ -33,16 +33,15 @@ void ja_p_clears(ja_p *p)
 	mpz_clears(p->x, p->y, p->z, p->zz, NULL);
 }
 
-int af2ja(af_p *af, ja_p *ja)
+void af2ja(af_p *af, ja_p *ja)
 {
 	mpz_set(ja->x, af->x);
 	mpz_set(ja->y, af->y);
 	mpz_set_d(ja->z, 1);
 	mpz_set_d(ja->zz, 1);
-	return 0;
 }
 
-int ja2af(mpz_t p, ja_p *ja, af_p *af)
+void ja2af(mpz_t p, ja_p *ja, af_p *af)
 {
 	mpz_t t;
 	mpz_init(t);
@@ -57,16 +56,15 @@ int ja2af(mpz_t p, ja_p *ja, af_p *af)
 	mpz_mul(af->y, ja->y, t);
 	mpz_mod(af->y, af->y, p);
 	mpz_clear(t);
-	return 0;
 }
 
-int point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
+void point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
 {
 
 	if ((mpz_cmp(p1->x, p2->x) == 0) & (mpz_cmp(p1->y, p2->y) == 0) & (mpz_cmp(p1->z, p2->z) == 0))	//如果输入两数相等，进行倍点运算
 	{
 		point_double(p, p1, p3);
-		return 0;
+		return;
 	}
 	else if ((mpz_cmp_d(p1->x, 0) == 0) & (mpz_cmp_d(p1->y, 0) == 0))	//当其中一点为0点，直接输出另一点
 	{
@@ -74,7 +72,7 @@ int point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
 		mpz_set(p3->y, p2->y);
 		mpz_set(p3->z, p2->z);
 		mpz_set(p3->zz, p2->zz);
-		return 0;
+		return;
 	}
 	else if ((mpz_cmp_d(p2->x, 0) == 0) & (mpz_cmp_d(p2->y, 0) == 0))
 	{
@@ -82,7 +80,7 @@ int point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
 		mpz_set(p3->y, p1->y);
 		mpz_set(p3->z, p1->z);
 		mpz_set(p3->zz, p1->zz);
-		return 0;
+		return;
 	}
 	mpz_t t, a1, a2, a3, b1, b2, c1, c2, d1, d2;
 	mpz_inits(t, a1, a2, a3, b1, b2, c1, c2, d1, d2, NULL);
@@ -132,10 +130,9 @@ int point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
 	//Z3^2=(Z3 )^2
 	mpz_mul(p3->zz, p3->z, p3->z);
 	mpz_clears(t, a1, a2, a3, b1, b2, c1, c2, d1, d2, NULL);
-	return 0;
 }
 
-int point_double(mpz_t p, ja_p *p1, ja_p *p3)
+void point_double(mpz_t p, ja_p *p1, ja_p *p3)
 {
 	if ((mpz_cmp_d(p1->y, 0) == 0) | (mpz_cmp_d(p1->z, 0) == 0))	//如果输入的是0点，输出0点
 	{
@@ -143,7 +140,7 @@ int point_double(mpz_t p, ja_p *p1, ja_p *p3)
 		mpz_set_d(p3->y, 0);
 		mpz_set_d(p3->z, 1);
 		mpz_set_d(p3->zz, 1);
-		return 0;
+		return;
 	}
 	mpz_t t1, t2, x1x1, a1, a2, a3, b1, z1_4;
 	mpz_inits(t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
@@ -202,5 +199,21 @@ int point_double(mpz_t p, ja_p *p1, ja_p *p3)
 	//Z3Z3=Z3^2
 	mpz_mul(p3->zz, p3->z, p3->z);
 	mpz_clears(a, t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
-	return 0;
+}
+
+void point_set(ja_p *rp, ja_p *p)
+{
+	mpz_set(rp->x, p->x);
+	mpz_set(rp->y, p->y);
+	mpz_set(rp->z, p->z);
+	mpz_set(rp->zz, p->zz);
+
+}
+
+void point_neg(ja_p *rp, ja_p *p)
+{
+	mpz_set(rp->x, p->x);
+	mpz_neg(rp->y, p->y);
+	mpz_set(rp->z, p->z);
+	mpz_set(rp->zz, p->zz);
 }
