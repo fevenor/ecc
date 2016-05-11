@@ -145,32 +145,15 @@ void point_double(mpz_t p, ja_p *p1, ja_p *p3)
 	mpz_t t1, t2, x1x1, a1, a2, a3, b1, z1_4;
 	mpz_inits(t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
 
-	//将a4设为1，用于调试
-	mpz_t a;
-	mpz_init_set_d(a, 1);
-
 	//B1=Y1^2
 	mpz_mul(b1, p1->y, p1->y);
-	if (mpz_cmp_d(a, -3) != 0)
-	{
-		//A1=3X1^2+a(Z1^2)^2
-		mpz_mul(x1x1, p1->x, p1->x);
-		mpz_mul(z1_4, p1->zz, p1->zz);
-		mpz_mul(a1, a, z1_4);
-		mpz_add(a1, a1, x1x1);
-		mpz_add(a1, a1, x1x1);
-		mpz_add(a1, a1, x1x1);
-	}
-	else
-	{
-		//当a=-3时,可以进一步减少计算
-		//A1=3(X1+Z1^2)(X1-Z1^2)
-		mpz_add(t1, p1->x, p1->zz);
-		mpz_sub(t2, p1->x, p1->zz);
-		mpz_mul(t1, t1, t2);
-		mpz_add(a1, t1, t1);
-		mpz_add(a1, a1, t1);
-	}
+	//当a=-3时,可以进一步减少计算
+	//A1=3(X1+Z1^2)(X1-Z1^2)
+	mpz_add(t1, p1->x, p1->zz);
+	mpz_sub(t2, p1->x, p1->zz);
+	mpz_mul(t1, t1, t2);
+	mpz_add(a1, t1, t1);
+	mpz_add(a1, a1, t1);
 	//A2=4X1*B1
 	mpz_mul(a2, p1->x, b1);
 	mpz_add(a2, a2, a2);
@@ -198,7 +181,7 @@ void point_double(mpz_t p, ja_p *p1, ja_p *p3)
 	mpz_mod(p3->y, p3->y, p);
 	//Z3Z3=Z3^2
 	mpz_mul(p3->zz, p3->z, p3->z);
-	mpz_clears(a, t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
+	mpz_clears(t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
 }
 
 void point_set(ja_p *rp, ja_p *p)
