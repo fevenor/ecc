@@ -137,6 +137,7 @@
     <ClInclude Include="libcal.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="parameter_info.c" />
     <ClCompile Include="point_op.c" />
     <ClCompile Include="scalar_mul.c" />
   </ItemGroup>

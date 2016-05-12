@@ -21,7 +21,14 @@ ja_p* ja_p_inits()
 	return p;
 }
 
-
+group* group_inits()
+{
+	group *c = malloc(sizeof(*c) + sizeof(mpz_t) * 4 + sizeof(ja_p));
+	mpz_inits(c->p, c->a, c->b, c->n, NULL);
+	c->g = ja_p_inits();
+	c->length = 0;
+	return c;
+}
 
 void af_p_clears(af_p *p)
 {
@@ -199,4 +206,26 @@ void point_neg(ja_p *rp, ja_p *p)
 	mpz_neg(rp->y, p->y);
 	mpz_set(rp->z, p->z);
 	mpz_set(rp->zz, p->zz);
+}
+
+int point_is_on_curve(group *c, af_p *p)
+{
+	mpz_t t1, t2;
+	mpz_inits(t1, t2, NULL);
+	mpz_mul(t1, p->x, p->x);
+	mpz_mul(t1, t1, p->x);
+	mpz_mul(t2, c->a, p->x);
+	mpz_add(t1, t1, t2);
+	mpz_add(t1, t1, c->b);
+	mpz_mod(t1, t1, c->p);
+	mpz_mul(t2, p->y, p->y);
+	mpz_mod(t2, t2, c->p);
+	if (mpz_cmp(t1, t2) == 0)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }

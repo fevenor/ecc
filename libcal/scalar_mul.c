@@ -111,3 +111,66 @@ void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
 	free(naf_k->n);
 	free(naf_k);
 }
+
+void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname)
+{
+	int i, n;
+
+	//获得预计算的值及椭圆参数
+	ja_p *p = ja_p_inits();
+	ja_p *pre_p[16];
+	group *c = group_inits();
+	for (i = 0; i < 16; i++)
+	{
+		pre_p[i] = ja_p_inits();
+	}
+	get_pre_cal_value(ecname, pre_p);
+	get_curve_parameters(ecname, c);
+
+	//计算长度，初始化矩阵
+	int k_length = mpz_sizeinbase(k, 2);
+	int k_c_length;
+	int *k_c[4], *k_int;
+	char *k_char;
+	k_c_length = c->length / 4;
+	k_char = malloc(sizeof(char)*c->length);	//char格式的k
+	k_int = malloc(sizeof(int)*c->length);		//int数组格式的k
+	mpz_get_str(k_char, 2, k);
+	if (k_length > c->length)					//当k大于密钥长度
+	{
+		for (i = 0; i < c->length; i++)
+		{
+			k_int[i] = k_char[k_length - 1 - i] - '0';
+		}
+	}
+	else if (k_length < c->length)				//当k小于密钥长度
+	{
+		for (i = 0; i < k_length; i++)
+		{
+			k_int[i] = k_char[k_length - 1 - i] - '0';
+		}
+		for (i = k_length; i < c->length; i++)
+		{
+			k_int[i] = 0;
+		}
+	}
+	else										//当k等于密钥长度
+	{
+		for (i = 0; i < c->length; i++)
+		{
+			k_int[i] = k_char[k_length - 1 - i] - '0';
+		}
+	}
+	for (i = 0; i < 4; i++)						//将k分为4行
+	{
+		k_c[i] = k_int + (k_c_length*i);
+	}
+
+	//主循环部分
+	for (i = k_c_length - 1; i >= 0; i--)
+	{
+		point_double(c->p, q, q);
+		n = (((k_c[3][i] * 2 + k_c[2][i]) * 2) + k_c[1][i]) * 2 + k_c[0][i];
+		point_add(c->p, q, pre_p[n], q);
+	}
+}
