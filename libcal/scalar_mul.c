@@ -114,15 +114,16 @@ void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
 
 void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname)
 {
-	int i, n;
+	int i, n0, n1;
 
 	//获得预计算的值及椭圆参数
 	ja_p *p = ja_p_inits();
-	ja_p *pre_p[16];
+	ja_p *pre_p[2][16];
 	group *c = group_inits();
 	for (i = 0; i < 16; i++)
 	{
-		pre_p[i] = ja_p_inits();
+		pre_p[0][i] = ja_p_inits();
+		pre_p[1][i] = ja_p_inits();
 	}
 	get_pre_cal_value(ecname, pre_p);
 	get_curve_parameters(ecname, c);
@@ -167,10 +168,12 @@ void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname)
 	}
 
 	//主循环部分
-	for (i = k_c_length - 1; i >= 0; i--)
+	for (i = k_c_length/2 - 1; i >= 0; i--)
 	{
 		point_double(c->p, q, q);
-		n = (((k_c[3][i] * 2 + k_c[2][i]) * 2) + k_c[1][i]) * 2 + k_c[0][i];
-		point_add(c->p, q, pre_p[n], q);
+		n0 = (((k_c[3][i] * 2 + k_c[2][i]) * 2) + k_c[1][i]) * 2 + k_c[0][i];
+		n1 = (((k_c[3][i+ k_c_length / 2] * 2 + k_c[2][i+ k_c_length / 2]) * 2) + k_c[1][i+ k_c_length / 2]) * 2 + k_c[0][i+ k_c_length / 2];
+		point_add(c->p, q, pre_p[0][n0], q);
+		point_add(c->p, q, pre_p[1][n1], q);
 	}
 }

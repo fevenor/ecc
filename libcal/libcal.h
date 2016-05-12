@@ -90,8 +90,8 @@ extern void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname);
 extern int get_curve_parameters(enum curve_name ecname, group *c);
 
 //计算预计算值
-extern void pre_cal(enum curve_name ecname, ja_p *pre_p[]);
+extern void pre_cal(enum curve_name ecname, ja_p *pre_p[][16]);
 
 //获得存储的预计算值
 //如果找到预计算值返回0，否则返回-1
-extern int get_pre_cal_value(enum curve_name ecname, ja_p *pre_p[]);
+extern int get_pre_cal_value(enum curve_name ecname, ja_p *pre_p[][16]);
