@@ -49,12 +49,15 @@ naf* bin2nafw(int w, mpz_t k, naf *naf_k)
 	return naf_k;
 }
 
-void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
+void scalar_mul_w(int w, mpz_t k, af_p *p, af_p *q, group *c)
 {
 	int i, pre_p_n, k_length;
 	double pre_p_max;
 	ja_p *(*pre_p);
 	ja_p *temp = ja_p_inits();
+	ja_p *jap = ja_p_inits();
+	ja_p *jaq = ja_p_inits();
+	af2ja(p, jap);
 
 	//预计算iP的值
 	pre_p_max = pow(2, w - 1) - 1;						//确认最大点的值
@@ -64,12 +67,12 @@ void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
 	{
 		pre_p[i] = ja_p_inits();
 	}
-	point_set(pre_p[0], p);								//令p1=p
-	ja_p *c = ja_p_inits();
-	point_double(prime, p, c);
+	point_set(pre_p[0], jap);								//令p1=p
+	ja_p *dp = ja_p_inits();
+	point_double(c->p, jap, dp);
 	for (i = 1; i <= pre_p_n; i++)
 	{
-		point_add(prime, pre_p[i - 1], c, pre_p[i]);
+		point_add(c->p, pre_p[i - 1], dp, pre_p[i]);
 	}
 
 	//对k进行NAFw编码转换
@@ -82,23 +85,28 @@ void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
 	//主循环部分
 	for (i = naf_k->l; i >= 0; i--)
 	{
-		point_double(prime, q, q);				//Q=2Q
+		point_double(c->p, jaq, jaq);				//Q=2Q
 		if (naf_k->v[i] != 0)
 		{
 
 			if (naf_k->n[i] == 1)
 			{
-				point_add(prime, q, pre_p[(naf_k->v[i] - 1) / 2], q);	//Q=Q+Pki
+				point_add(c->p, jaq, pre_p[(naf_k->v[i] - 1) / 2], jaq);	//Q=Q+Pki
 			}
 			else
 			{
 				point_neg(temp, pre_p[(naf_k->v[i] - 1) / 2]);
-				point_add(prime, q, temp, q);							//Q=Q-Pki
+				point_add(c->p, jaq, temp, jaq);							//Q=Q-Pki
 			}
 		}
 	}
 
+	ja2af(c->p, jaq, q);
 
+	//释放内存
+	ja_p_clears(jap);
+	ja_p_clears(jaq);
+	ja_p_clears(dp);
 	//释放iP占用的内存
 	for (i = 0; i <= pre_p_n; i++)
 	{
@@ -112,12 +120,12 @@ void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime)
 	free(naf_k);
 }
 
-void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname)
+void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 {
 	int i, n0, n1;
+	ja_p *jaq = ja_p_inits();
 
 	//获得预计算的值及椭圆参数
-	ja_p *p = ja_p_inits();
 	ja_p *pre_p[2][16];
 	group *c = group_inits();
 	for (i = 0; i < 16; i++)
@@ -168,12 +176,22 @@ void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname)
 	}
 
 	//主循环部分
-	for (i = k_c_length/2 - 1; i >= 0; i--)
+	for (i = k_c_length / 2 - 1; i >= 0; i--)
 	{
-		point_double(c->p, q, q);
+		point_double(c->p, jaq, jaq);
 		n0 = (((k_c[3][i] * 2 + k_c[2][i]) * 2) + k_c[1][i]) * 2 + k_c[0][i];
-		n1 = (((k_c[3][i+ k_c_length / 2] * 2 + k_c[2][i+ k_c_length / 2]) * 2) + k_c[1][i+ k_c_length / 2]) * 2 + k_c[0][i+ k_c_length / 2];
-		point_add(c->p, q, pre_p[0][n0], q);
-		point_add(c->p, q, pre_p[1][n1], q);
+		n1 = (((k_c[3][i + k_c_length / 2] * 2 + k_c[2][i + k_c_length / 2]) * 2) + k_c[1][i + k_c_length / 2]) * 2 + k_c[0][i + k_c_length / 2];
+		point_add(c->p, jaq, pre_p[0][n0], jaq);
+		point_add(c->p, jaq, pre_p[1][n1], jaq);
+	}
+
+	ja2af(c->p, jaq, q);
+
+	//释放内存
+	ja_p_clears(jaq);
+	for (i = 0; i < 16; i++)
+	{
+		ja_p_clears(pre_p[0][i]);
+		ja_p_clears(pre_p[1][i]);
 	}
 }

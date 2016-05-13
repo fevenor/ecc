@@ -80,10 +80,12 @@ extern int point_is_on_curve(group *c, af_p *p);
 
 
 //NAFw窗口法标量乘运算
-extern void scalar_mul_w(int w, mpz_t k, ja_p *p, ja_p *q, mpz_t prime);
+//Q=kP
+extern void scalar_mul_w(int w, mpz_t k, af_p *p, af_p *q, group *c);
 
 //Comb法标量乘运算
-extern void scalar_mul_c(mpz_t k, ja_p *q, enum curve_name ecname);
+//Q=kG
+extern void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname);
 
 //由曲线名获得曲线参数
 //如果找到曲线返回0，否则返回-1

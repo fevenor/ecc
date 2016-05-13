@@ -222,10 +222,12 @@ int point_is_on_curve(group *c, af_p *p)
 	mpz_mod(t2, t2, c->p);
 	if (mpz_cmp(t1, t2) == 0)
 	{
+		mpz_clears(t1, t2, NULL);
 		return 1;
 	}
 	else
 	{
+		mpz_clears(t1, t2, NULL);
 		return 0;
 	}
 }
