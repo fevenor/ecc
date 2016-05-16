@@ -13,27 +13,28 @@ typedef struct nafw_number
 naf* bin2nafw(int w, mpz_t k, naf *naf_k)
 {
 	int i;
-	double t2;
-	mpz_t m, t, t1;
+	double t1, t2;
+	mpz_t m, t;
 	mpz_init_set(m, k);
 	mpz_init(t);
-	mpz_init_set_d(t1, pow(2, w));
+	t1 = pow(2, w);
 	t2 = pow(2, w - 1);
 	for (i = 0; mpz_cmp_d(m, 0); i++)			//当k不为0时
 	{
 		if (mpz_odd_p(m))						//如果k是奇数
 		{
-			mpz_mod(t, m, t1);					//t=k mod 2^w
+			mpz_mod_ui(t, m, t1);					//t=k mod 2^w
 			if (mpz_cmp_d(t, t2) == -1)			//如果t<2^(w-1)
 			{
 				naf_k->n[i] = 1;				//ki为正数
 				naf_k->v[i] = mpz_get_ui(t);	//ki=t
+												//naf_k->v[i] = t->_mp_d;			//ki=t
 				mpz_sub(m, m, t);				//k=k-ki
 			}
 			else
 			{
 				naf_k->n[i] = 0;				//ki为负数
-				mpz_sub(t, t1, t);				//|ki|=2^w-t
+				mpz_ui_sub(t, t1, t);				//|ki|=2^w-t
 				naf_k->v[i] = mpz_get_ui(t);
 				mpz_add(m, m, t);				//k=k+(-ki)
 			}
@@ -46,6 +47,7 @@ naf* bin2nafw(int w, mpz_t k, naf *naf_k)
 		mpz_divexact_ui(m, m, 2);				//k=k/2
 	}
 	naf_k->l = i - 1;
+	mpz_clears(m, t, NULL);
 	return naf_k;
 }
 
@@ -62,7 +64,7 @@ void scalar_mul_w(int w, mpz_t k, af_p *p, af_p *q, group *c)
 	//预计算iP的值
 	pre_p_max = pow(2, w - 1) - 1;						//确认最大点的值
 	pre_p_n = (pre_p_max - 1) / 2;						//确认点的个数
-	pre_p = malloc(sizeof(ja_p)*(pre_p_n + 1));			//预分配内存
+	pre_p = malloc(sizeof(ja_p*)*(pre_p_n + 1));			//预分配内存
 	for (i = 0; i <= pre_p_n; i++)
 	{
 		pre_p[i] = ja_p_inits();
@@ -142,7 +144,7 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 	int *k_c[4], *k_int;
 	char *k_char;
 	k_c_length = c->length / 4;
-	k_char = malloc(sizeof(char)*c->length);	//char格式的k
+	k_char = malloc(sizeof(char)*(c->length + 1));	//char格式的k
 	k_int = malloc(sizeof(int)*c->length);		//int数组格式的k
 	mpz_get_str(k_char, 2, k);
 	if (k_length > c->length)					//当k大于密钥长度
@@ -188,10 +190,13 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 	ja2af(c->p, jaq, q);
 
 	//释放内存
+	group_clears(c);
 	ja_p_clears(jaq);
 	for (i = 0; i < 16; i++)
 	{
 		ja_p_clears(pre_p[0][i]);
 		ja_p_clears(pre_p[1][i]);
 	}
+	free(k_char);
+	free(k_int);
 }

@@ -19,6 +19,7 @@ ja_p* ja_p_inits()
 	ja_p *p = malloc(sizeof(*p) + sizeof(mpz_t) * 4);
 	mpz_inits(p->x, p->y, p->z, p->zz, NULL);
 	return p;
+	
 }
 
 group* group_inits()
@@ -33,11 +34,20 @@ group* group_inits()
 void af_p_clears(af_p *p)
 {
 	mpz_clears(p->x, p->y, NULL);
+	free(p);
 }
 
 void ja_p_clears(ja_p *p)
 {
 	mpz_clears(p->x, p->y, p->z, p->zz, NULL);
+	free(p);
+}
+
+void group_clears(group *c)
+{
+	ja_p_clears(c->g);
+	mpz_clears(c->p, c->a, c->b, c->n, NULL);
+	free(c);
 }
 
 void af2ja(af_p *af, ja_p *ja)
@@ -136,6 +146,7 @@ void point_add(mpz_t p, ja_p *p1, ja_p *p2, ja_p *p3)
 	mpz_mod(p3->z, p3->z, p);
 	//Z3^2=(Z3 )^2
 	mpz_mul(p3->zz, p3->z, p3->z);
+	mpz_mod(p3->zz, p3->zz, p);
 	mpz_clears(t, a1, a2, a3, b1, b2, c1, c2, d1, d2, NULL);
 }
 
@@ -188,6 +199,7 @@ void point_double(mpz_t p, ja_p *p1, ja_p *p3)
 	mpz_mod(p3->y, p3->y, p);
 	//Z3Z3=Z3^2
 	mpz_mul(p3->zz, p3->z, p3->z);
+	mpz_mod(p3->zz, p3->zz, p);
 	mpz_clears(t1, t2, x1x1, a1, a2, a3, b1, z1_4, NULL);
 }
 

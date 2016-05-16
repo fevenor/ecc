@@ -58,6 +58,8 @@ extern group* group_inits();
 extern void af_p_clears(af_p *p);
 //释放jacobian坐标系的点占用的空间
 extern void ja_p_clears(ja_p *p);
+//释放椭圆曲线群参数占用的空间
+extern void group_clears(group *c);
 
 //将affine坐标系的点转换到jacobian坐标系
 extern void af2ja(af_p *af, ja_p *ja);
