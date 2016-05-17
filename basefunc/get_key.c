@@ -10,8 +10,8 @@ key* get_key(enum curve_name ecname)
 	get_curve_parameters(ecname, c);
 	get_rand(c->length, key);
 	mpz_mod(key, key, c->n);
-	newkey = malloc(sizeof(key) + sizeof(char) *((c->length / 8 + 1) * 3 + 10));
-	newkey->curve = malloc(sizeof(char) * 10);
+	newkey = malloc(sizeof(key) + sizeof(char*) * 3 + 10);
+	newkey->curve = malloc(sizeof(char) * 11);
 	newkey->private = malloc(sizeof(char)*(c->length / 8 + 1));
 	newkey->public_x = malloc(sizeof(char)*(c->length / 8 + 1));
 	newkey->public_y = malloc(sizeof(char)*(c->length / 8 + 1));
@@ -19,7 +19,6 @@ key* get_key(enum curve_name ecname)
 	mpz_get_str(newkey->private, 16, key);
 	mpz_get_str(newkey->public_x, 16, pub_p->x);
 	mpz_get_str(newkey->public_y, 16, pub_p->y);
-	af_p_clears(pub_p);
 	if (ecname == 0)
 	{
 		newkey->curve = "secp160r2";
@@ -36,5 +35,9 @@ key* get_key(enum curve_name ecname)
 	{
 		newkey->curve = "secp256r1";
 	}
+	//ÊÍ·ÅÄÚ´æ
+	mpz_clear(key);
+	//af_p_clears(pub_p);
+	//group_clears(c);
 	return newkey;
 }
