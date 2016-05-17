@@ -1,14 +1,10 @@
 #include "basefunc.h"
-#if defined _MSC_VER								//判断visual studio环境
-#include "windows.h"
-#include "process.h"
-#endif
 
 //互斥锁
-HANDLE mutex = NULL;
+static HANDLE mutex = NULL;
 
 //线程信号
-HANDLE *threadsignal;
+static HANDLE *threadsignal;
 
 //线程参数
 typedef struct
@@ -58,28 +54,28 @@ void encrypt_thread(threadarg *t)
 		//对密文数据类型转换
 		partlength = t->c->length / 8;
 		//E的x值
-		length_diff = (t->c->length / 4 - mpz_sizeinbase(e->x, 16)) / 2;
+		length_diff = (t->c->length / 4 - (int)mpz_sizeinbase(e->x, 16)) / 2;
 		for (j = 0; j < length_diff; j++)
 		{
 			t->cipherdata[i][j] = 0x00;
 		}
 		mpz_export(t->cipherdata[i] + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->x);
 		//E的y值
-		length_diff = (t->c->length / 4 - mpz_sizeinbase(e->y, 16)) / 2;
+		length_diff = (t->c->length / 4 - (int)mpz_sizeinbase(e->y, 16)) / 2;
 		for (j = 0; j < length_diff; j++)
 		{
 			t->cipherdata[i][j + partlength] = 0x00;
 		}
 		mpz_export(t->cipherdata[i] + partlength + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->y);
 		//C的x值
-		length_diff = (t->c->length / 4 - mpz_sizeinbase(c->x, 16)) / 2;
+		length_diff = (t->c->length / 4 - (int)mpz_sizeinbase(c->x, 16)) / 2;
 		for (j = 0; j < length_diff; j++)
 		{
 			t->cipherdata[i][j + partlength * 2] = 0x00;
 		}
 		mpz_export(t->cipherdata[i] + partlength * 2 + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, c->x);
 		//C的y值
-		length_diff = (t->c->length / 4 - mpz_sizeinbase(c->y, 16)) / 2;
+		length_diff = (t->c->length / 4 - (int)mpz_sizeinbase(c->y, 16)) / 2;
 		for (j = 0; j < length_diff; j++)
 		{
 			t->cipherdata[i][j + partlength * 3] = 0x00;
@@ -132,9 +128,9 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 	mpz_set_str(pubp->y, pub_y, 16);
 	//导入原始数据
 	blocklength_byte = 2 * (c->length / 8 - 1);
-	blocknum = (info_length_byte + 8 - 1) / (blocklength_byte)+1;		//分块数
+	blocknum = (int)((info_length_byte + 8 - 1) / (blocklength_byte)+1);		//分块数
 	plain = malloc(sizeof(unsigned char)*(blocknum*blocklength_byte));
-	info_length_diff_byte = blocknum*blocklength_byte - (info_length_byte + 8);
+	info_length_diff_byte = (int)(blocknum*(unsigned long long)blocklength_byte - (info_length_byte + 8));
 	memcpy(plain, &info_length_byte, 8);
 	if (info_length_diff_byte == 0)
 	{

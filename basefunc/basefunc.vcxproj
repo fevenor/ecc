@@ -123,6 +123,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -134,6 +135,7 @@
     <ClInclude Include="basefunc.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="decrypt.c" />
     <ClCompile Include="encrypt.c" />
     <ClCompile Include="get_key.c" />
     <ClCompile Include="get_rand.c" />
