@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="basefunc.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -27,6 +24,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="get_key.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="encrypt.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -131,12 +131,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="basefunc.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="encrypt.c" />
     <ClCompile Include="get_key.c" />
     <ClCompile Include="get_rand.c" />
   </ItemGroup>
