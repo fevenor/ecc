@@ -1,43 +1,43 @@
 #include "basefunc.h"
 
-key* get_key(enum curve_name ecname)
+int get_key(char *curve, char *privatekey, char *public_x, char *public_y)
 {
-	key *newkey;
+	enum curve_name ecname;
 	mpz_t key;
 	af_p *pub_p = af_p_inits();
 	group *c = group_inits();
 	mpz_init(key);
+	//获得曲线参数
+	if (strcmp(curve, "secp160r2") == 0)
+	{
+		ecname = 0;
+	}
+	else if (strcmp(curve, "secp192r1") == 0)
+	{
+		ecname = 1;
+	}
+	else if (strcmp(curve, "secp224r1") == 0)
+	{
+		ecname = 2;
+	}
+	else if (strcmp(curve, "secp256r1") == 0)
+	{
+		ecname = 3;
+	}
+	else
+	{
+		return 1;
+	}
 	get_curve_parameters(ecname, c);
 	get_rand(c->length, key);
 	mpz_mod(key, key, c->n);
-	newkey = malloc(sizeof(key) + sizeof(char*) * 3 + 10);
-	newkey->curve = malloc(sizeof(char) * 11);
-	newkey->private = malloc(sizeof(char)*(c->length / 8 + 1));
-	newkey->public_x = malloc(sizeof(char)*(c->length / 8 + 1));
-	newkey->public_y = malloc(sizeof(char)*(c->length / 8 + 1));
 	scalar_mul_c(key, pub_p, ecname);
-	mpz_get_str(newkey->private, 16, key);
-	mpz_get_str(newkey->public_x, 16, pub_p->x);
-	mpz_get_str(newkey->public_y, 16, pub_p->y);
-	if (ecname == 0)
-	{
-		newkey->curve = "secp160r2";
-	}
-	else if (ecname == 1)
-	{
-		newkey->curve = "secp192r1";
-	}
-	else if (ecname == 2)
-	{
-		newkey->curve = "secp224r1";
-	}
-	else if (ecname == 3)
-	{
-		newkey->curve = "secp256r1";
-	}
+	mpz_get_str(privatekey, 16, key);
+	mpz_get_str(public_x, 16, pub_p->x);
+	mpz_get_str(public_y, 16, pub_p->y);
 	//释放内存
 	mpz_clear(key);
 	//af_p_clears(pub_p);
 	//group_clears(c);
-	return newkey;
+	return 0;
 }

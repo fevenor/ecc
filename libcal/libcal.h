@@ -2,6 +2,7 @@
 椭圆曲线群运算及标量乘运算库
 提供点加、倍点，标量乘函数
 */
+#pragma once
 #include "malloc.h"
 #if defined __GNUC__					//判断GCC环境
 #include "gmp.h"						//GMP头文件

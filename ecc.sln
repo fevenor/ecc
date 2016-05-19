@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcal", "libcal\libcal.vcxproj", "{48B4F2CD-B1F9-45C4-8CBD-9DC5C5E4D67A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basefunc", "basefunc\basefunc.vcxproj", "{299134B6-ED1A-497A-B526-F884BBC684AF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{48B4F2CD-B1F9-45C4-8CBD-9DC5C5E4D67A} = {48B4F2CD-B1F9-45C4-8CBD-9DC5C5E4D67A}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
