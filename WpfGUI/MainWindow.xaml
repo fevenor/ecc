@@ -9,41 +9,160 @@
     <Grid>
         <TabControl x:Name="tabControl" Height="auto" VerticalAlignment="Stretch" Width="auto" HorizontalAlignment="Stretch" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <TabItem Header="密钥对生成">
-                <Grid Margin="0,0,0,0">
-                    <DockPanel LastChildFill="False" Margin="0,0,0,0">
-                        <DockPanel Height="40" LastChildFill="False" Margin="0,0,0,0" DockPanel.Dock="Top">
-                            <TextBlock x:Name="curveNameTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="曲线类型：" VerticalAlignment="Center" DockPanel.Dock="Left"/>
-                            <ComboBox x:Name="curveNameComboBox" HorizontalAlignment="Center" Margin="25,0,0,0" VerticalAlignment="Center" Width="85" SelectedIndex="3" DockPanel.Dock="Left">
-                                <ComboBoxItem Content="secp160r2" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
-                                <ComboBoxItem Content="secp192r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
-                                <ComboBoxItem Content="secp224r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
-                                <ComboBoxItem Content="secp256r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
-                            </ComboBox>
-                            <Button x:Name="getKeyButton" Content="生成" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  DockPanel.Dock="Right"/>
-                        </DockPanel>
-                        <DockPanel Height="40" LastChildFill="False" Margin="0,0,0,0" DockPanel.Dock="Top">
-                            <TextBlock x:Name="privateKeyTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="私钥：" VerticalAlignment="Center" DockPanel.Dock="Left"/>
-                            <Button x:Name="savePrivateKeyButton" Content="保存私钥" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Width="75" DockPanel.Dock="Right"/>
-                        </DockPanel>
-                        <TextBox x:Name="privateKeyTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Height="50" Width="auto" DockPanel.Dock="Top"/>
-                        <DockPanel Height="40" LastChildFill="False" Margin="0,0,0,0" DockPanel.Dock="Top">
-                            <TextBlock x:Name="publicKeyTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="公钥：" VerticalAlignment="Center"/>
-                            <Button x:Name="savePublicKeyButton" Content="保存公钥"  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Width="75" DockPanel.Dock="Right"/>
-                        </DockPanel>
-                        <TextBox x:Name="publicKeyTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Height="100" Width="auto" DockPanel.Dock="Top"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="2*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel LastChildFill="False" Grid.Row="0">
+                        <TextBlock x:Name="curveNameTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="曲线类型：" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                        <ComboBox x:Name="curveNameComboBox" HorizontalAlignment="Center" Margin="25,0,0,0" VerticalAlignment="Center" Width="85" SelectedIndex="3" DockPanel.Dock="Left">
+                            <ComboBoxItem Content="secp160r2" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                            <ComboBoxItem Content="secp192r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                            <ComboBoxItem Content="secp224r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                            <ComboBoxItem Content="secp256r1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                        </ComboBox>
+                        <Button x:Name="getKeyButton" Content="生成" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  DockPanel.Dock="Right"/>
                     </DockPanel>
+                    <DockPanel LastChildFill="False" Grid.Row="1">
+                        <TextBlock x:Name="privateKeyTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="私钥：" VerticalAlignment="Center" DockPanel.Dock="Left"/>
+                        <Button x:Name="savePrivateKeyButton" Content="保存私钥" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Width="75" DockPanel.Dock="Right"/>
+                    </DockPanel>
+                    <TextBox x:Name="privateKeyTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Height="auto" Width="auto" Grid.Row="2"/>
+                    <DockPanel LastChildFill="False" Grid.Row="3">
+                        <TextBlock x:Name="publicKeyTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="公钥：" VerticalAlignment="Center"/>
+                        <Button x:Name="savePublicKeyButton" Content="保存公钥"  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Width="75" DockPanel.Dock="Right"/>
+                    </DockPanel>
+                    <TextBox x:Name="publicKeyTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,5" TextWrapping="Wrap" Text="" Height="auto" Width="auto" Grid.Row="4"/>
                 </Grid>
             </TabItem>
             <TabItem Header="加密">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="80" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="85"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="115"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="publicKeyFileTextBlock" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="公钥文件：" Grid.Row="0" Grid.Column="0"/>
+                        <TextBox x:Name="publicKeyFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text=""  Grid.Row="0" Grid.Column="1"/>
+                        <Button x:Name="getPublicKeyFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="0" Grid.Column="2"/>
+                        <TextBlock x:Name="encryptionTypeTextBlock" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="加密类型：" Grid.Row="1" Grid.Column="0"/>
+                        <ComboBox x:Name="encryptionTypeComboBox" HorizontalAlignment="Left" Margin="25,0,0,0" VerticalAlignment="Center" Width="55" SelectedIndex="0" Grid.Row="1" Grid.Column="1">
+                            <ComboBoxItem Content="文本" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                            <ComboBoxItem Content="文件" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                        </ComboBox>
+                        <Button x:Name="encryptButton" Content="加密" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="1" Grid.Column="2"/>
+                    </Grid>
+                    <Grid Name="textEncryptionInterface" Visibility="Visible" Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="plaintextTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="明文：" VerticalAlignment="Center" Grid.Row="0"/>
+                        <TextBox x:Name="plaintextTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Grid.Row="1"/>
+                        <TextBlock x:Name="ciphertextTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="密文：" VerticalAlignment="Center" Grid.Row="2"/>
+                        <TextBox x:Name="ciphertextTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,5" TextWrapping="Wrap" Text="" Grid.Row="3"/>
+                    </Grid>
+                    <Grid Name="filetEncryptionInterface" Visibility="Collapsed" Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="115"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="plainFileTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="原文件：" VerticalAlignment="Center" Grid.Row="0"/>
+                        <TextBox x:Name="plainFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text="" Grid.Row="1" Grid.Column="0"/>
+                        <Button x:Name="getPlainFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="1" Grid.Column="1"/>
+                        <TextBlock x:Name="cipherFilesTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="加密文件：" VerticalAlignment="Center" Grid.Row="2"/>
+                        <TextBox x:Name="cipherFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text="" Grid.Row="3" Grid.Column="0"/>
+                        <Button x:Name="getCipherFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="3" Grid.Column="1"/>
+                    </Grid>
+                </Grid>
             </TabItem>
             <TabItem Header="解密">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="80" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="85"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="115"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="PrivateKeyFileTextBlock" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="私钥文件：" Grid.Row="0" Grid.Column="0"/>
+                        <TextBox x:Name="privateKeyFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text=""  Grid.Row="0" Grid.Column="1"/>
+                        <Button x:Name="getPrivateKeyFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="0" Grid.Column="2"/>
+                        <TextBlock x:Name="decryptionTypeTextBlock" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="解密类型：" Grid.Row="1" Grid.Column="0"/>
+                        <ComboBox x:Name="decryptionTypeComboBox" HorizontalAlignment="Left" Margin="25,0,0,0" VerticalAlignment="Center" Width="55" SelectedIndex="0" Grid.Row="1" Grid.Column="1">
+                            <ComboBoxItem Content="文本" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                            <ComboBoxItem Content="文件" HorizontalAlignment="Left" VerticalAlignment="Center" Width="auto"/>
+                        </ComboBox>
+                        <Button x:Name="decryptButton" Content="解密" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="1" Grid.Column="2"/>
+                    </Grid>
+                    <Grid Name="textDecryptionInterface" Visibility="Visible" Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="encryptedtextTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="密文：" VerticalAlignment="Center" Grid.Row="0"/>
+                        <TextBox x:Name="encryptedtextTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Grid.Row="1"/>
+                        <TextBlock x:Name="decryptedtextTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="明文：" VerticalAlignment="Center" Grid.Row="2"/>
+                        <TextBox x:Name="decryptedtextTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,5" TextWrapping="Wrap" Text="" Grid.Row="3"/>
+                    </Grid>
+                    <Grid Name="filetDecryptionInterface" Visibility="Collapsed" Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="115"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="encryptedFileTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="加密文件：" VerticalAlignment="Center" Grid.Row="0"/>
+                        <TextBox x:Name="encryptedFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text="" Grid.Row="1" Grid.Column="0"/>
+                        <Button x:Name="getEncryptedFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="1" Grid.Column="1"/>
+                        <TextBlock x:Name="decryptedFilesTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="解密文件：" VerticalAlignment="Center" Grid.Row="2"/>
+                        <TextBox x:Name="decryptedFilePathTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="25,0,25,0" TextWrapping="Wrap" Text="" Grid.Row="3" Grid.Column="0"/>
+                        <Button x:Name="getDecryptedFilePathButton" Content="选择" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center" Width="75"  Grid.Row="3" Grid.Column="1"/>
+                    </Grid>
+                </Grid>
             </TabItem>
             <TabItem Header="关于">
                 <Grid Background="#FFE5E5E5"/>
             </TabItem>
         </TabControl>
-
+        <StatusBar Name="statusBar" Visibility="Collapsed" HorizontalAlignment="Left" Height="20" VerticalAlignment="Bottom" Width="200">
+            <TextBlock x:Name="statusBarTextBlock" HorizontalAlignment="Stretch" Height="20" TextWrapping="Wrap" Text="" VerticalAlignment="Stretch" Width="200"/>
+        </StatusBar>
     </Grid>
 </Window>
