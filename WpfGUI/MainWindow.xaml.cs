@@ -99,20 +99,59 @@ namespace WpfGUI
         }
         private void Encrypt(object sender, RoutedEventArgs e)
         {
-            //加密时系统繁忙导致UI挂起，状态栏无法更新
-            statusBar.Visibility = Visibility.Visible;
-            statusBarTextBlock.Text = "读取文件...";
-            Encryption encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
-            byte[] plain = File.ReadAllBytes(plainFilePathTextBox.Text);
-            statusBarTextBlock.Text = "加密文件...";
-            byte[] cipher = encryption.Encrypt(plain);
-            statusBarTextBlock.Text = "加密完成";
-            System.Threading.Thread.Sleep(500);
-            statusBarTextBlock.Text = "保存文件";
-            File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
-            statusBar.Visibility = Visibility.Collapsed;
-            statusBarTextBlock.Text = "";
+            try
+            {
+                if (publicKeyFilePathTextBox.Text == "")
+                {
+                    throw new ArgumentException("公钥文件路径为空！");
+                }
+                statusBar.Visibility = Visibility.Visible;
+                statusBarTextBlock.Text = "读取公钥文件...";
+                Encryption encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
+                //文本加密
+                if (encryptionTypeComboBox.SelectedIndex == 0)
+                {
+                    if (plaintextTextBox.Text == "")
+                    {
+                        throw new ArgumentException("明文为空！");
+                    }
+                    byte[] plain = Encoding.Default.GetBytes(plaintextTextBox.Text);
+                    byte[] cipher = encryption.Encrypt(plain);
+                    ciphertextTextBox.Text = String.Concat(Array.ConvertAll(cipher, x => x.ToString("X2")));
+                }
+                //文件加密
+                else if (encryptionTypeComboBox.SelectedIndex == 1)
+                {
 
+                    //加密时系统繁忙导致UI挂起，状态栏无法更新
+                    if (plainFilePathTextBox.Text == "")
+                    {
+                        throw new ArgumentException("原文件路径为空！");
+                    }
+                    if (cipherFilePathTextBox.Text == "")
+                    {
+                        throw new ArgumentException("加密文件保存路径为空！");
+                    }
+                    byte[] plain = File.ReadAllBytes(plainFilePathTextBox.Text);
+                    statusBarTextBlock.Text = "加密文件...";
+                    byte[] cipher = encryption.Encrypt(plain);
+                    statusBarTextBlock.Text = "加密完成";
+                    System.Threading.Thread.Sleep(500);
+                    statusBarTextBlock.Text = "保存文件";
+                    File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
+                    statusBar.Visibility = Visibility.Collapsed;
+                    statusBarTextBlock.Text = "";
+                }
+
+            }
+            catch (ArgumentException error)
+            {
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
         }
         private void GetPlainFilePath(object sender, RoutedEventArgs e)
         {
@@ -168,18 +207,63 @@ namespace WpfGUI
         }
         private void Decrypt(object sender, RoutedEventArgs e)
         {
-            statusBar.Visibility = Visibility.Visible;
-            statusBarTextBlock.Text = "读取文件...";
-            Decryption decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
-            byte[] encrypted= File.ReadAllBytes(encryptedFilePathTextBox.Text);
-            statusBarTextBlock.Text = "解密文件...";
-            byte[] decrypted = decryption.Decrypt(encrypted);
-            statusBarTextBlock.Text = "解密完成";
-            System.Threading.Thread.Sleep(500);
-            statusBarTextBlock.Text = "保存文件";
-            File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
-            statusBar.Visibility = Visibility.Collapsed;
-            statusBarTextBlock.Text = "";
+            try
+            {
+                if (privateKeyFilePathTextBox.Text == "")
+                {
+                    throw new ArgumentException("私钥文件路径为空！");
+                }
+                statusBar.Visibility = Visibility.Visible;
+                statusBarTextBlock.Text = "读取私钥文件...";
+                Decryption decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
+                if (decryptionTypeComboBox.SelectedIndex == 0)
+                {
+                    if (encryptedtextTextBox.Text == "")
+                    {
+                        throw new ArgumentException("密文为空！");
+                    }
+                    if ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 != 0)
+                    {
+                        throw new ArgumentException("密文格式错误！");
+                    }
+                    int encryptedlength = encryptedtextTextBox.Text.Trim().Length >> 1;
+                    byte[] encrypted = new byte[encryptedlength];
+                    for (int i = 0; i < encryptedlength; i++)
+                    {
+                        encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
+                    }
+                    byte[] decrypted = decryption.Decrypt(encrypted);
+                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted); ;
+                }
+                else if (decryptionTypeComboBox.SelectedIndex == 1)
+                {
+                    if (encryptedFilePathTextBox.Text == "")
+                    {
+                        throw new ArgumentException("加密文件路径为空！");
+                    }
+                    if (decryptedFilePathTextBox.Text == "")
+                    {
+                        throw new ArgumentException("解密文件保存路径为空！");
+                    }
+                    byte[] encrypted = File.ReadAllBytes(encryptedFilePathTextBox.Text);
+                    statusBarTextBlock.Text = "解密文件...";
+                    byte[] decrypted = decryption.Decrypt(encrypted);
+                    statusBarTextBlock.Text = "解密完成";
+                    System.Threading.Thread.Sleep(500);
+                    statusBarTextBlock.Text = "保存文件";
+                    File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
+                    statusBar.Visibility = Visibility.Collapsed;
+                    statusBarTextBlock.Text = "";
+                }
+            }
+            catch (ArgumentException error)
+            {
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
         }
         private void GetEncryptedFilePath(object sender, RoutedEventArgs e)
         {
@@ -190,7 +274,7 @@ namespace WpfGUI
             if (openFileDialog.ShowDialog() == true)
             {
                 encryptedFilePathTextBox.Text = openFileDialog.FileName;
-                decryptedFilePathTextBox.Text = openFileDialog.FileName.Substring(0, openFileDialog.FileName.Length-10);
+                decryptedFilePathTextBox.Text = openFileDialog.FileName.Substring(0, openFileDialog.FileName.Length - 10);
             }
         }
         private void GetDecryptedFilePath(object sender, RoutedEventArgs e)
@@ -293,6 +377,11 @@ namespace WpfGUI
 
         public byte[] Decrypt(byte[] encrypted)
         {
+            if ((encrypted[0] == 0x00) & (privatekey.Length != 40) | (encrypted[0] == 0x01) & (privatekey.Length != 48) | (encrypted[0] == 0x02) & (privatekey.Length != 56) | (encrypted[0] == 0x03) & (privatekey.Length != 64))
+            {
+                throw new ArgumentException("私钥文件不匹配！");
+            }
+
             ulong decrypteddata_length_byte = 0;
             IntPtr temp = decrypt(privatekey, encrypted, (ulong)encrypted.Length, ref decrypteddata_length_byte);
             byte[] decrypted = new byte[decrypteddata_length_byte];
