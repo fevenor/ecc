@@ -25,6 +25,8 @@ namespace WpfGUI
     {
         internal Key newKey { get; private set; }
         public string statusInfo { get; private set; }
+        internal Encryption realtimeencryption { get; private set; }
+        internal Decryption realtimedecryption { get; private set; }
 
         public MainWindow()
         {
@@ -45,6 +47,11 @@ namespace WpfGUI
             decryptButton.Click += new RoutedEventHandler(Decrypt);
             getEncryptedFilePathButton.Click += new RoutedEventHandler(GetEncryptedFilePath);
             getDecryptedFilePathButton.Click += new RoutedEventHandler(GetDecryptedFilePath);
+
+            plaintextTextBox.GotFocus += RealTimeEncryptActivation;
+            plaintextTextBox.TextChanged += RealTimeEncrypt;
+            encryptedtextTextBox.GotFocus += RealTimeDecryptActivation;
+            encryptedtextTextBox.TextChanged += RealTimeDecrypt;
         }
 
         //密钥对生成的方法
@@ -70,6 +77,91 @@ namespace WpfGUI
             saveFileDialog.Title = "保存私钥";
             saveFileDialog.ShowDialog();
             newKey.SavePublicKey(saveFileDialog.FileName);
+        }
+
+        //实时加密和解密
+        private void RealTimeEncryptActivation(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (publicKeyFilePathTextBox.Text != "")
+                {
+                    realtimeencryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
+                }
+            }
+            catch (FileNotFoundException)
+            {
+
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
+        }
+        private void RealTimeEncrypt(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                if ((plaintextTextBox.Text != "") && (realtimeencryption != null))
+                {
+                    byte[] plain = Encoding.Default.GetBytes(plaintextTextBox.Text);
+                    byte[] cipher = realtimeencryption.Encrypt(plain);
+                    ciphertextTextBox.Text = String.Concat(Array.ConvertAll(cipher, x => x.ToString("X2")));
+                }
+                else
+                {
+                    ciphertextTextBox.Text = "";
+                }
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
+
+        }
+        private void RealTimeDecryptActivation(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (privateKeyFilePathTextBox.Text != "")
+                {
+                    realtimedecryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
+                }
+            }
+            catch (FileNotFoundException)
+            {
+
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
+        }
+        private void RealTimeDecrypt(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 == 0) && (realtimedecryption != null))
+                {
+                    int encryptedlength = encryptedtextTextBox.Text.Trim().Length >> 1;
+                    byte[] encrypted = new byte[encryptedlength];
+                    for (int i = 0; i < encryptedlength; i++)
+                    {
+                        encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
+                    }
+                    byte[] decrypted = realtimedecryption.Decrypt(encrypted);
+                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted); ;
+
+                }
+                else
+                {
+                    decryptedtextTextBox.Text = "";
+                }
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
         }
 
         //加密的方法
@@ -145,6 +237,10 @@ namespace WpfGUI
 
             }
             catch (ArgumentException error)
+            {
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (FileNotFoundException error)
             {
                 MessageBox.Show(error.Message.ToString());
             }
@@ -233,7 +329,7 @@ namespace WpfGUI
                         encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
                     byte[] decrypted = decryption.Decrypt(encrypted);
-                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted); ;
+                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted);
                 }
                 else if (decryptionTypeComboBox.SelectedIndex == 1)
                 {
@@ -257,6 +353,10 @@ namespace WpfGUI
                 }
             }
             catch (ArgumentException error)
+            {
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (FileNotFoundException error)
             {
                 MessageBox.Show(error.Message.ToString());
             }
@@ -377,7 +477,7 @@ namespace WpfGUI
 
         public byte[] Decrypt(byte[] encrypted)
         {
-            if ((encrypted[0] == 0x00) & (privatekey.Length != 40) | (encrypted[0] == 0x01) & (privatekey.Length != 48) | (encrypted[0] == 0x02) & (privatekey.Length != 56) | (encrypted[0] == 0x03) & (privatekey.Length != 64))
+            if ((encrypted[0] == 0x00) && (privatekey.Length != 40) || (encrypted[0] == 0x01) && (privatekey.Length != 48) || (encrypted[0] == 0x02) && (privatekey.Length != 56) || (encrypted[0] == 0x03) && (privatekey.Length != 64))
             {
                 throw new ArgumentException("私钥文件不匹配！");
             }
