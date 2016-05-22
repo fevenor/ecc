@@ -70,7 +70,7 @@
                             <RowDefinition Height="40" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="40" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="2*" />
                         </Grid.RowDefinitions>
                         <TextBlock x:Name="plaintextTextBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="明文：" VerticalAlignment="Center" Grid.Row="0"/>
                         <TextBox x:Name="plaintextTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,20,0" TextWrapping="Wrap" Text="" Grid.Row="1"/>
@@ -127,7 +127,7 @@
                     <Grid Name="textDecryptionInterface" Visibility="Visible" Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="40" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="2*" />
                             <RowDefinition Height="40" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
