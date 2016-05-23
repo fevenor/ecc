@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -23,14 +24,20 @@ namespace WpfGUI
     // </summary>
     public partial class MainWindow : Window
     {
-        internal Key newKey { get; private set; }
-        public string statusInfo { get; private set; }
-        internal Encryption realtimeencryption { get; private set; }
-        internal Decryption realtimedecryption { get; private set; }
+        private BackgroundWorker encryptworker;
+        private BackgroundWorker decryptworker;
+        private Key newKey;
+        private Encryption encryption;
+        private byte[] plain;
+        private byte[] cipher;
+        private Decryption decryption;
+        private byte[] encrypted;
+        private byte[] decrypted;
 
         public MainWindow()
         {
             InitializeComponent();
+            InitializeBackgroundWorker();
 
             getKeyButton.Click += new RoutedEventHandler(GetKey);
             savePrivateKeyButton.Click += new RoutedEventHandler(SavePrivateKey);
@@ -52,6 +59,22 @@ namespace WpfGUI
             plaintextTextBox.TextChanged += RealTimeEncrypt;
             encryptedtextTextBox.GotFocus += RealTimeDecryptActivation;
             encryptedtextTextBox.TextChanged += RealTimeDecrypt;
+        }
+
+        private void InitializeBackgroundWorker()
+        {
+            encryptworker = new BackgroundWorker();
+            decryptworker = new BackgroundWorker();
+            encryptworker.WorkerReportsProgress = false;
+            encryptworker.WorkerSupportsCancellation = true;
+            decryptworker.WorkerReportsProgress = false;
+            decryptworker.WorkerSupportsCancellation = true;
+
+            encryptworker.DoWork += new DoWorkEventHandler(EncryptWorker);
+            encryptworker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(EncryptWorkerRunWorkerCompleted);
+            decryptworker.DoWork += new DoWorkEventHandler(DecryptWorker);
+            decryptworker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(DecryptWorkerRunWorkerCompleted);
+
         }
 
         //密钥对生成的方法
@@ -86,7 +109,7 @@ namespace WpfGUI
             {
                 if (publicKeyFilePathTextBox.Text != "")
                 {
-                    realtimeencryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
+                    encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
                 }
             }
             catch (FileNotFoundException)
@@ -102,10 +125,10 @@ namespace WpfGUI
         {
             try
             {
-                if ((plaintextTextBox.Text != "") && (realtimeencryption != null))
+                if ((plaintextTextBox.Text != "") && (encryption != null))
                 {
                     byte[] plain = Encoding.Default.GetBytes(plaintextTextBox.Text);
-                    byte[] cipher = realtimeencryption.Encrypt(plain);
+                    byte[] cipher = encryption.Encrypt(plain);
                     ciphertextTextBox.Text = String.Concat(Array.ConvertAll(cipher, x => x.ToString("X2")));
                 }
                 else
@@ -125,7 +148,7 @@ namespace WpfGUI
             {
                 if (privateKeyFilePathTextBox.Text != "")
                 {
-                    realtimedecryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
+                    decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
                 }
             }
             catch (FileNotFoundException)
@@ -141,7 +164,7 @@ namespace WpfGUI
         {
             try
             {
-                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 == 0) && (realtimedecryption != null))
+                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 == 0) && (decryption != null))
                 {
                     int encryptedlength = encryptedtextTextBox.Text.Trim().Length >> 1;
                     byte[] encrypted = new byte[encryptedlength];
@@ -149,7 +172,7 @@ namespace WpfGUI
                     {
                         encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
-                    byte[] decrypted = realtimedecryption.Decrypt(encrypted);
+                    byte[] decrypted = decryption.Decrypt(encrypted);
                     decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted); ;
 
                 }
@@ -198,8 +221,8 @@ namespace WpfGUI
                     throw new ArgumentException("公钥文件路径为空！");
                 }
                 statusBar.Visibility = Visibility.Visible;
-                statusBarTextBlock.Text = "读取公钥文件...";
-                Encryption encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
+                statusBarTextBlock.Text = "读取公钥文件";
+                encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
                 //文本加密
                 if (encryptionTypeComboBox.SelectedIndex == 0)
                 {
@@ -215,7 +238,6 @@ namespace WpfGUI
                 else if (encryptionTypeComboBox.SelectedIndex == 1)
                 {
 
-                    //加密时系统繁忙导致UI挂起，状态栏无法更新
                     if (plainFilePathTextBox.Text == "")
                     {
                         throw new ArgumentException("原文件路径为空！");
@@ -224,30 +246,46 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("加密文件保存路径为空！");
                     }
-                    byte[] plain = File.ReadAllBytes(plainFilePathTextBox.Text);
-                    statusBarTextBlock.Text = "加密文件...";
-                    byte[] cipher = encryption.Encrypt(plain);
-                    statusBarTextBlock.Text = "加密完成";
-                    System.Threading.Thread.Sleep(500);
-                    statusBarTextBlock.Text = "保存文件";
-                    File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
-                    statusBar.Visibility = Visibility.Collapsed;
-                    statusBarTextBlock.Text = "";
-                }
+                    plain = File.ReadAllBytes(plainFilePathTextBox.Text);
+                    statusBarTextBlock.Text = "加密文件中...";
 
+                    if (encryptworker.IsBusy != true)
+                    {
+                        encryptworker.RunWorkerAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show("上一个加密操作尚未完成！");
+                    }
+                }
             }
             catch (ArgumentException error)
             {
                 MessageBox.Show(error.Message.ToString());
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
             }
             catch (FileNotFoundException error)
             {
                 MessageBox.Show(error.Message.ToString());
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
             }
             catch (Exception error)
             {
                 MessageBox.Show(error.ToString());
             }
+        }
+        private void EncryptWorker(object sender, DoWorkEventArgs e)
+        {
+            cipher = encryption.Encrypt(plain);
+        }
+        private void EncryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
+            statusBar.Visibility = Visibility.Collapsed;
+            statusBarTextBlock.Text = "";
+            MessageBox.Show("加密完成");
         }
         private void GetPlainFilePath(object sender, RoutedEventArgs e)
         {
@@ -310,8 +348,8 @@ namespace WpfGUI
                     throw new ArgumentException("私钥文件路径为空！");
                 }
                 statusBar.Visibility = Visibility.Visible;
-                statusBarTextBlock.Text = "读取私钥文件...";
-                Decryption decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
+                statusBarTextBlock.Text = "读取私钥文件";
+                decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
                 if (decryptionTypeComboBox.SelectedIndex == 0)
                 {
                     if (encryptedtextTextBox.Text == "")
@@ -341,29 +379,46 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("解密文件保存路径为空！");
                     }
-                    byte[] encrypted = File.ReadAllBytes(encryptedFilePathTextBox.Text);
-                    statusBarTextBlock.Text = "解密文件...";
-                    byte[] decrypted = decryption.Decrypt(encrypted);
-                    statusBarTextBlock.Text = "解密完成";
-                    System.Threading.Thread.Sleep(500);
-                    statusBarTextBlock.Text = "保存文件";
-                    File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
-                    statusBar.Visibility = Visibility.Collapsed;
-                    statusBarTextBlock.Text = "";
+                    encrypted = File.ReadAllBytes(encryptedFilePathTextBox.Text);
+                    statusBarTextBlock.Text = "解密文件中...";
+
+                    if (decryptworker.IsBusy != true)
+                    {
+                        decryptworker.RunWorkerAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show("上一个解密操作尚未完成！");
+                    }
                 }
             }
             catch (ArgumentException error)
             {
                 MessageBox.Show(error.Message.ToString());
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
             }
             catch (FileNotFoundException error)
             {
                 MessageBox.Show(error.Message.ToString());
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
             }
             catch (Exception error)
             {
                 MessageBox.Show(error.ToString());
             }
+        }
+        private void DecryptWorker(object sender, DoWorkEventArgs e)
+        {
+            decrypted = decryption.Decrypt(encrypted);
+        }
+        private void DecryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
+            statusBar.Visibility = Visibility.Collapsed;
+            statusBarTextBlock.Text = "";
+            MessageBox.Show("解密完成");
         }
         private void GetEncryptedFilePath(object sender, RoutedEventArgs e)
         {
