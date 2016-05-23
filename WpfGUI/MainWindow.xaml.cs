@@ -220,6 +220,10 @@ namespace WpfGUI
                 {
                     throw new ArgumentException("公钥文件路径为空！");
                 }
+                if (!File.Exists(publicKeyFilePathTextBox.Text))
+                {
+                    throw new ArgumentException("公钥文件不存在！");
+                }
                 statusBar.Visibility = Visibility.Visible;
                 statusBarTextBlock.Text = "读取公钥文件";
                 encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
@@ -246,6 +250,17 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("加密文件保存路径为空！");
                     }
+                    if (!File.Exists(plainFilePathTextBox.Text))
+                    {
+                        throw new ArgumentException("原文件不存在！");
+                    }
+                    if (File.Exists(cipherFilePathTextBox.Text))
+                    {
+                        if (new FileInfo(cipherFilePathTextBox.Text).IsReadOnly)
+                        {
+                            throw new ArgumentException("加密文件只读，无法覆盖！");
+                        }
+                    }
                     plain = File.ReadAllBytes(plainFilePathTextBox.Text);
                     statusBarTextBlock.Text = "加密文件中...";
 
@@ -261,15 +276,19 @@ namespace WpfGUI
             }
             catch (ArgumentException error)
             {
-                MessageBox.Show(error.Message.ToString());
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
+                MessageBox.Show(error.Message.ToString());
             }
             catch (FileNotFoundException error)
             {
-                MessageBox.Show(error.Message.ToString());
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (UnauthorizedAccessException error)
+            {
+                MessageBox.Show(error.Message.ToString());
             }
             catch (Exception error)
             {
@@ -282,10 +301,17 @@ namespace WpfGUI
         }
         private void EncryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
-            statusBar.Visibility = Visibility.Collapsed;
-            statusBarTextBlock.Text = "";
-            MessageBox.Show("加密完成");
+            try
+            {
+                File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
+                MessageBox.Show("加密完成");
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
         }
         private void GetPlainFilePath(object sender, RoutedEventArgs e)
         {
@@ -347,6 +373,10 @@ namespace WpfGUI
                 {
                     throw new ArgumentException("私钥文件路径为空！");
                 }
+                if (!File.Exists(privateKeyFilePathTextBox.Text))
+                {
+                    throw new ArgumentException("私钥文件不存在！");
+                }
                 statusBar.Visibility = Visibility.Visible;
                 statusBarTextBlock.Text = "读取私钥文件";
                 decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
@@ -379,6 +409,17 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("解密文件保存路径为空！");
                     }
+                    if (!File.Exists(encryptedFilePathTextBox.Text))
+                    {
+                        throw new ArgumentException("加密文件不存在！");
+                    }
+                    if (File.Exists(decryptedFilePathTextBox.Text))
+                    {
+                        if (new FileInfo(decryptedFilePathTextBox.Text).IsReadOnly)
+                        {
+                            throw new ArgumentException("解密文件只读，无法覆盖！");
+                        }
+                    }
                     encrypted = File.ReadAllBytes(encryptedFilePathTextBox.Text);
                     statusBarTextBlock.Text = "解密文件中...";
 
@@ -394,15 +435,19 @@ namespace WpfGUI
             }
             catch (ArgumentException error)
             {
-                MessageBox.Show(error.Message.ToString());
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
+                MessageBox.Show(error.Message.ToString());
             }
             catch (FileNotFoundException error)
             {
-                MessageBox.Show(error.Message.ToString());
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
+                MessageBox.Show(error.Message.ToString());
+            }
+            catch (UnauthorizedAccessException error)
+            {
+                MessageBox.Show(error.Message.ToString());
             }
             catch (Exception error)
             {
@@ -415,10 +460,17 @@ namespace WpfGUI
         }
         private void DecryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
-            statusBar.Visibility = Visibility.Collapsed;
-            statusBarTextBlock.Text = "";
-            MessageBox.Show("解密完成");
+            try
+            {
+                File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
+                MessageBox.Show("解密完成");
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.ToString());
+            }
         }
         private void GetEncryptedFilePath(object sender, RoutedEventArgs e)
         {
