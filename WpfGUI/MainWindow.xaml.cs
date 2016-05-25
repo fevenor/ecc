@@ -59,6 +59,8 @@ namespace WpfGUI
             plaintextTextBox.TextChanged += RealTimeEncrypt;
             encryptedtextTextBox.GotFocus += RealTimeDecryptActivation;
             encryptedtextTextBox.TextChanged += RealTimeDecrypt;
+
+            aboutTextBlock.Text = "此程序使用ECC实现文本和文件加密。\n私钥文件后缀为.key\n公钥文件后缀为.pub\n加密文件的后缀为.encrypted";
         }
 
         private void InitializeBackgroundWorker()

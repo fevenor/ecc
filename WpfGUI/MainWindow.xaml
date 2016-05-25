@@ -158,7 +158,19 @@
                 </Grid>
             </TabItem>
             <TabItem Header="关于">
-                <Grid Background="#FFE5E5E5"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="130" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="240"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="aboutTextBlock" xml:space="preserve" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="" VerticalAlignment="Stretch" Grid.Row="1" Grid.Column="1"/>
+                </Grid>
             </TabItem>
         </TabControl>
         <StatusBar Name="statusBar" Visibility="Collapsed" HorizontalAlignment="Left" Height="20" VerticalAlignment="Bottom" Width="200">
