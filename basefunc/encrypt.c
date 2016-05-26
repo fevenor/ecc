@@ -17,6 +17,7 @@ typedef struct
 	int blocklength_byte;
 	af_p *p;
 	unsigned char *(*plaindata);
+	unsigned char *(*saltdata);
 	unsigned char *(*cipherdata);
 }threadarg;
 
@@ -25,16 +26,14 @@ void encrypt_thread(threadarg *t)
 {
 
 	int i, j, length_diff;
-	mpz_t salt;
 	mpz_t m;
 	unsigned char *temp = malloc(sizeof(unsigned char)*(c->length / 8 - 1));
-	mpz_inits(salt, m, NULL);
+	mpz_init(m);
 	for (i = 0; i < t->blocknum; i++)
 	{
 		//对明文加盐
-		get_rand(c->length / 2 - 1, salt);
 		memcpy(temp, t->plaindata[i], t->blocklength_byte);
-		mpz_export(temp + (c->length / 16), NULL, 1, sizeof(unsigned char), 0, 0, salt);
+		memcpy(temp + (c->length / 16), t->saltdata[i], t->blocklength_byte - 1);
 		//对明文数据类型转换
 		mpz_import(m, c->length / 8 - 1, 1, sizeof(unsigned char), 0, 0, temp);
 		//用P加密明文
@@ -50,7 +49,7 @@ void encrypt_thread(threadarg *t)
 		mpz_export(t->cipherdata[i] + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, m);
 	}
 	//释放内存
-	mpz_clears(salt, m, NULL);
+	mpz_clear(m);
 	free(temp);
 }
 
@@ -65,12 +64,15 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 	af_p *e = af_p_inits();
 	SYSTEM_INFO siSysInfo;
 	unsigned char *(*plaindata);
+	unsigned char *(*saltdata);
 	unsigned char *(*cipherdata);
 	unsigned char *plain;
+	unsigned char *salt;
 	unsigned char *secret;
 	threadarg *(*t);
 	enum curve_name ecname;
 	mpz_t k;
+	HCRYPTPROV salt_p = 0;
 	mpz_init(k);
 	//获得曲线参数
 	c = group_inits();
@@ -125,6 +127,16 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 	{
 		plaindata[i] = plain + blocklength_byte*i;
 	}
+	//导入随机数据
+	salt = malloc(sizeof(unsigned char)*(blocknum*(blocklength_byte-1)));
+	CryptAcquireContext(&salt_p, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
+	CryptGenRandom(salt_p, blocknum*(blocklength_byte - 1), salt);
+	CryptReleaseContext(salt_p, 0);
+	saltdata = malloc(sizeof(unsigned char *)*blocknum);
+	for (i = 0; i < blocknum; i++)
+	{
+		saltdata[i] = salt + (blocklength_byte-1)*i;
+	}
 	//为密文分配内存
 	secret_blocklength_byte = c->length / 8;
 	secret = malloc(sizeof(unsigned char)*(blocknum*secret_blocklength_byte + 1 + c->length / 4));	//1字节的曲线编号,曲线长度/4字节的E点信息
@@ -169,8 +181,6 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 	//多线程加密处理
 	GetSystemInfo(&siSysInfo);		//获得系统信息
 	threadnum = siSysInfo.dwNumberOfProcessors;		//根据逻辑处理器个数确定主要线程数
-	//debug
-	//threadnum = 1;
 	if (blocknum >= threadnum)						//如果需要处理的块数足够多，多线程处理
 	{
 		bnft = blocknum / threadnum;			//每个线程处理块数
@@ -194,10 +204,12 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 			t[i]->blocknum = bnft;
 			t[i]->p = p;
 			t[i]->plaindata = malloc(sizeof(unsigned char *)*bnft);
+			t[i]->saltdata = malloc(sizeof(unsigned char *)*bnft);
 			t[i]->cipherdata = malloc(sizeof(unsigned char *)*bnft);
 			for (j = 0; j < bnft; j++)
 			{
 				t[i]->plaindata[j] = plaindata[i*bnft + j];
+				t[i]->saltdata[j] = saltdata[i*bnft + j];
 				t[i]->cipherdata[j] = cipherdata[i*bnft + j];
 			}
 			threadsignal[i] = _beginthread(encrypt_thread, 0, t[i]);
@@ -210,10 +222,12 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 			t[threadnum]->blocknum = lastbnft;
 			t[threadnum]->p = p;
 			t[threadnum]->plaindata = malloc(sizeof(unsigned char *)*lastbnft);
+			t[threadnum]->saltdata = malloc(sizeof(unsigned char *)*lastbnft);
 			t[threadnum]->cipherdata = malloc(sizeof(unsigned char *)*lastbnft);
 			for (j = 0; j < lastbnft; j++)
 			{
 				t[threadnum]->plaindata[j] = plaindata[threadnum*bnft + j];
+				t[threadnum]->saltdata[j] = saltdata[threadnum*bnft + j];
 				t[threadnum]->cipherdata[j] = cipherdata[threadnum*bnft + j];
 			}
 			threadsignal[threadnum] = _beginthread(encrypt_thread, 0, t[threadnum]);
@@ -225,6 +239,7 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 			for (i = 0; i < threadnum; i++)
 			{
 				free(t[i]->plaindata);
+				free(t[i]->saltdata);
 				free(t[i]->cipherdata);
 				free(t[i]);
 			}
@@ -235,6 +250,7 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 			for (i = 0; i < threadnum + 1; i++)
 			{
 				free(t[i]->plaindata);
+				free(t[i]->saltdata);
 				free(t[i]->cipherdata);
 				free(t[i]);
 			}
@@ -251,16 +267,17 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 		t[0]->blocknum = blocknum;
 		t[0]->p = p;
 		t[0]->plaindata = malloc(sizeof(unsigned char *)*blocknum);
-		t[0]->plaindata[0] = plaindata[0];
+		t[0]->saltdata = malloc(sizeof(unsigned char *)*blocknum);
 		t[0]->cipherdata = malloc(sizeof(unsigned char *)*blocknum);
-		t[0]->cipherdata[0] = cipherdata[0];
 		for (j = 0; j < blocknum; j++)
 		{
 			t[0]->plaindata[j] = plaindata[j];
+			t[0]->saltdata[j] = saltdata[j];
 			t[0]->cipherdata[j] = cipherdata[j];
 		}
 		encrypt_thread(t[0]);
 		free(t[0]->plaindata);
+		free(t[0]->saltdata);
 		free(t[0]->cipherdata);
 		free(t[0]);
 	}
@@ -273,6 +290,8 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 	af_p_clears(e);
 	free(plain);
 	free(plaindata);
+	free(salt);
+	free(saltdata);
 	free(cipherdata);
 	free(t);
 	return secret;
