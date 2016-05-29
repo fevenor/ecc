@@ -60,6 +60,7 @@ unsigned char* decrypt(char *key, unsigned char *secret, unsigned long long ciph
 	//解密
 	mpz_t m;
 	mpz_init(m);
+	unsigned char *temp = malloc(sizeof(unsigned char)*(c->length / 8 - 1));
 	for (i = 0; i < blocknum; i++)
 	{
 		//将对密文数据类型转换
@@ -69,14 +70,17 @@ unsigned char* decrypt(char *key, unsigned char *secret, unsigned long long ciph
 		mpz_mod(m, m, c->p);
 		mpz_mul(m, m, inverse_x);
 		mpz_mod(m, m, c->p);
-		mpz_tdiv_q_2exp(m, m, c->length / 2 - 8);
 		//对明文数据类型转换
-		length_diff = (c->length / 8 - (int)mpz_sizeinbase(m, 16)) / 2;
+		length_diff = (c->length / 4 - 2 - (int)mpz_sizeinbase(m, 16)) / 2;
 		for (j = 0; j < length_diff; j++)
 		{
-			plaindata[i][j] = 0x00;
+			temp[j] = 0x00;
 		}
-		mpz_export(plaindata[i] + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, m);
+		mpz_export(temp + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, m);
+		//提取真实信息
+		int salt_location = (int)temp[0] % (c->length / 16);
+		memcpy(plaindata[i], temp + 1, salt_location);
+		memcpy(plaindata[i] + salt_location, temp + 1 + salt_location + c->length / 16 - 2, c->length / 16 - salt_location);
 	}
 	memcpy(plaindata_length_byte, plain, 8);
 	memmove(plain, plain + 8, sizeof(unsigned char)*(blocknum*plain_blocklength_byte - 8));
@@ -88,6 +92,7 @@ unsigned char* decrypt(char *key, unsigned char *secret, unsigned long long ciph
 	group_clears(c);
 	af_p_clears(p);
 	af_p_clears(e);
+	free(temp);
 	free(plaindata);
 	free(cipherdata);
 	return plain;

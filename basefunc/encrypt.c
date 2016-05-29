@@ -25,15 +25,19 @@ typedef struct
 void encrypt_thread(threadarg *t)
 {
 
-	int i, j, length_diff;
+	int i, j, salt_location, length_diff;
 	mpz_t m;
 	unsigned char *temp = malloc(sizeof(unsigned char)*(c->length / 8 - 1));
 	mpz_init(m);
 	for (i = 0; i < t->blocknum; i++)
 	{
 		//对明文加盐
-		memcpy(temp, t->plaindata[i], t->blocklength_byte);
-		memcpy(temp + (c->length / 16), t->saltdata[i], t->blocklength_byte - 1);
+		salt_location = t->saltdata[i][0];
+		salt_location = salt_location%t->blocklength_byte;								//获得加盐位置
+		memcpy(temp, t->saltdata[i], 1);												//位置信息
+		memcpy(temp + 1, t->plaindata[i], salt_location);								//第一部分明文信息
+		memcpy(temp + 1 + salt_location, t->saltdata[i] + 1, t->blocklength_byte - 2);	//随机信息
+		memcpy(temp + salt_location + t->blocklength_byte - 1, t->plaindata[i] + salt_location, t->blocklength_byte - salt_location);	//第二部分明文信息
 		//对明文数据类型转换
 		mpz_import(m, c->length / 8 - 1, 1, sizeof(unsigned char), 0, 0, temp);
 		//用P加密明文
@@ -128,14 +132,14 @@ unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *inf
 		plaindata[i] = plain + blocklength_byte*i;
 	}
 	//导入随机数据
-	salt = malloc(sizeof(unsigned char)*(blocknum*(blocklength_byte-1)));
+	salt = malloc(sizeof(unsigned char)*(blocknum*(blocklength_byte - 1)));
 	CryptAcquireContext(&salt_p, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
 	CryptGenRandom(salt_p, blocknum*(blocklength_byte - 1), salt);
 	CryptReleaseContext(salt_p, 0);
 	saltdata = malloc(sizeof(unsigned char *)*blocknum);
 	for (i = 0; i < blocknum; i++)
 	{
-		saltdata[i] = salt + (blocklength_byte-1)*i;
+		saltdata[i] = salt + (blocklength_byte - 1)*i;
 	}
 	//为密文分配内存
 	secret_blocklength_byte = c->length / 8;
