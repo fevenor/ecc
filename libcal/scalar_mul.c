@@ -101,6 +101,10 @@ void scalar_mul_w(int w, mpz_t k, af_p *p, af_p *q, group *c)
 				point_add(c->p, jaq, temp, jaq);							//Q=Q-Pki
 			}
 		}
+		else
+		{
+			point_add(c->p, temp, pre_p[0], temp);							//虚操作
+		}
 	}
 
 	ja2af(c->p, jaq, q);
@@ -126,6 +130,7 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 {
 	int i, n0, n1;
 	ja_p *jaq = ja_p_inits();
+	ja_p *temp = ja_p_inits();
 
 	//获得预计算的值及椭圆参数
 	ja_p *pre_p[2][16];
@@ -183,8 +188,22 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 		point_double(c->p, jaq, jaq);
 		n0 = (((k_c[3][i] * 2 + k_c[2][i]) * 2) + k_c[1][i]) * 2 + k_c[0][i];
 		n1 = (((k_c[3][i + k_c_length / 2] * 2 + k_c[2][i + k_c_length / 2]) * 2) + k_c[1][i + k_c_length / 2]) * 2 + k_c[0][i + k_c_length / 2];
-		point_add(c->p, jaq, pre_p[0][n0], jaq);
-		point_add(c->p, jaq, pre_p[1][n1], jaq);
+		if (n0 != 0)
+		{
+			point_add(c->p, jaq, pre_p[0][n0], jaq);
+		}
+		else
+		{
+			point_add(c->p, temp, pre_p[0][1], temp);							//虚操作
+		}
+		if (n1 != 0)
+		{
+			point_add(c->p, jaq, pre_p[1][n1], jaq);
+		}
+		else
+		{
+			point_add(c->p, temp, pre_p[1][1], temp);							//虚操作
+		}
 	}
 
 	ja2af(c->p, jaq, q);
@@ -192,6 +211,7 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 	//释放内存
 	group_clears(c);
 	ja_p_clears(jaq);
+	ja_p_clears(temp);
 	for (i = 0; i < 16; i++)
 	{
 		ja_p_clears(pre_p[0][i]);

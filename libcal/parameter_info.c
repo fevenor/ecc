@@ -207,7 +207,7 @@ int get_pre_cal_value(enum curve_name ecname, ja_p *pre_p[][16])
 		//secp160r2
 		{
 			{
-				//pre_p[0][1]
+				//pre_p[0][0]
 				{
 					"0",
 					"0"
