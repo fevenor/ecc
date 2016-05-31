@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include<vector>
 
 #if defined _MSC_VER								//判断visual studio环境
 #include "getopt.h"
@@ -10,6 +11,8 @@
 using namespace std;
 
 extern "C" _declspec(dllimport) int get_key(const char *curve, char *privatekey, char *public_x, char *public_y);
+extern "C" _declspec(dllimport) unsigned char* encrypt(const char *curve, const char *pub_x, const char *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte);
+extern "C" _declspec(dllimport) unsigned char* decrypt(const char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte);
 
 void display_help()
 {
@@ -42,10 +45,10 @@ int main(int argc, char *argv[])
 	if (argc == 1)
 	{
 		display_help();
-		return 0;
+		return 1;
 	}
 	opterr = 0;
-	char* const short_options = "gn:edp:k:i:o::";
+	char* const short_options = "gn:edp:k:i:o:";
 	struct option long_options[] = {
 		{ "getkey", 0, NULL, 'g' },
 		{ "encrypt", 0, NULL, 'e' },
@@ -60,7 +63,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int option_index = 0;
 	bool getkey_sign = false, encrypt_sign = false, decrypt_sign = false;
-	string curvename, privatekeyfile, publickeyfile, in, out;
+	string curvename, privatekeyfilepath, publickeyfilepath, in, out;
 	char privatekey[65], public_x[65], public_y[65];
 
 	while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1)	//读取选项
@@ -80,10 +83,10 @@ int main(int argc, char *argv[])
 			curvename = optarg;
 			break;
 		case 'k':
-			privatekeyfile = optarg;
+			privatekeyfilepath = optarg;
 			break;
 		case 'p':
-			publickeyfile = optarg;
+			publickeyfilepath = optarg;
 			break;
 		case 'i':
 			in = optarg;
@@ -104,10 +107,10 @@ int main(int argc, char *argv[])
 	if (getkey_sign && !encrypt_sign && !decrypt_sign)		//密钥对生成
 	{
 		//参数检查
-		if (privatekeyfile == "")
+		if (privatekeyfilepath == "")
 		{
 			display_help();
-			return 0;
+			return 1;
 		}
 		if (curvename == "")
 		{
@@ -120,7 +123,7 @@ int main(int argc, char *argv[])
 				<< "支持的曲线：\n"
 				<< "secp160r2\tsecp192r1\tsecp224r1\tsecp256r1\n"
 				<< endl;
-			return 0;
+			return 1;
 		}
 		//获得密钥对
 		get_key(curvename.c_str(), privatekey, public_x, public_y);
@@ -131,13 +134,13 @@ int main(int argc, char *argv[])
 			<< public_x << endl << public_y
 			<< endl;
 		//保存密钥对
-		if (publickeyfile == "")
+		if (publickeyfilepath == "")
 		{
-			publickeyfile = privatekeyfile + ".pub";
+			publickeyfilepath = privatekeyfilepath + ".pub";
 		}
-		privatekeyfile = privatekeyfile + ".key";
-		ofstream outprivatekeyfile(privatekeyfile);
-		ofstream outpublickeyfile(publickeyfile);
+		privatekeyfilepath = privatekeyfilepath + ".key";
+		ofstream outprivatekeyfile(privatekeyfilepath);
+		ofstream outpublickeyfile(publickeyfilepath);
 		outprivatekeyfile << curvename << endl << privatekey;
 		outprivatekeyfile.close();
 		outpublickeyfile << curvename << endl << public_x << endl << public_y;
@@ -146,16 +149,102 @@ int main(int argc, char *argv[])
 	}
 	else if (!getkey_sign && encrypt_sign && !decrypt_sign)	//加密
 	{
-
+		//参数检查
+		if ((publickeyfilepath == "") || (in == ""))
+		{
+			display_help();
+			return 1;
+		}
+		//读取文件
+		ifstream publickeyfile(publickeyfilepath);
+		ifstream infile(in, ios::binary);
+		vector<unsigned char> info;
+		if (!publickeyfile)
+		{
+			cout << "打开公钥文件错误！" << endl;
+			return 1;
+		}
+		else
+		{
+			getline(publickeyfile, curvename);
+			publickeyfile.getline(public_x, 65);
+			publickeyfile.getline(public_y, 65);
+			publickeyfile.close();
+		}
+		if (!infile)
+		{
+			cout << "打开待加密文件错误！" << endl;
+			return 1;
+		}
+		else
+		{
+			info.resize(infile.seekg(0, std::ios::end).tellg());
+			infile.seekg(0, std::ios::beg).read((char*)&info[0], static_cast<std::streamsize>(info.size()));
+			infile.close();
+		}
+		//加密
+		unsigned long long cipherdata_length_byte;
+		unsigned char* cipher = encrypt(curvename.c_str(), public_x, public_y, &info[0], info.size(), &cipherdata_length_byte);
+		//保存文件
+		if (out == "")
+		{
+			out = in + ".encrypted";
+		}
+		ofstream outfile(out, ios::binary);
+		outfile.write((char*)cipher, cipherdata_length_byte);
+		outfile.close();
+		return 0;
 	}
 	else if (!getkey_sign && !encrypt_sign && decrypt_sign)	//解密
 	{
-
+		//参数检查
+		if ((privatekeyfilepath == "") || (in == ""))
+		{
+			display_help();
+			return 1;
+		}
+		//读取文件
+		ifstream privatekeyfile(privatekeyfilepath);
+		ifstream infile(in, ios::binary);
+		vector<unsigned char> secret;
+		if (!privatekeyfile)
+		{
+			cout << "打开私钥文件错误！" << endl;
+			return 1;
+		}
+		else
+		{
+			getline(privatekeyfile, curvename);
+			privatekeyfile.getline(privatekey, 65);
+			privatekeyfile.close();
+		}
+		if (!infile)
+		{
+			cout << "打开加密文件错误！" << endl;
+			return 1;
+		}
+		else
+		{
+			secret.resize(infile.seekg(0, std::ios::end).tellg());
+			infile.seekg(0, std::ios::beg).read((char*)&secret[0], static_cast<std::streamsize>(secret.size()));
+			infile.close();
+		}
+		//解密
+		unsigned long long plaindata_length_byte;
+		unsigned char* info = decrypt(privatekey, &secret[0], secret.size(), &plaindata_length_byte);
+		//保存文件
+		if (out == "")
+		{
+			out = in.substr(0, in.length() - 10);
+		}
+		ofstream outfile(out, ios::binary);
+		outfile.write((char*)info, plaindata_length_byte);
+		outfile.close();
+		return 0;
 	}
 	else
 	{
 		display_help();
+		return 1;
 	}
-
-	return 0;
 }
