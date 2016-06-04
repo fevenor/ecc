@@ -541,7 +541,7 @@ namespace WpfGUI
 
     class Encryption
     {
-        [DllImport("basefunc.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("basefunc.dll", EntryPoint= "ecc_encrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         extern static IntPtr encrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] info, ulong info_length_byte, ref ulong cipherdata_length_byte);
 
         public string curve;
@@ -574,7 +574,7 @@ namespace WpfGUI
 
     class Decryption
     {
-        [DllImport("basefunc.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("basefunc.dll", EntryPoint = "ecc_decrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         extern static IntPtr decrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPArray)] byte[] secret, ulong cipherdata_length_byte, ref ulong plaindata_length_byte);
 
         public string privatekey;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="ecc 工作空间">
+		<Project filename="libcal/libcal.cbp" />
+		<Project filename="basefunc/basefunc.cbp">
+			<Depends filename="libcal/libcal.cbp" />
+		</Project>
+		<Project filename="cli/cli.cbp">
+			<Depends filename="libcal/libcal.cbp" />
+			<Depends filename="basefunc/basefunc.cbp" />
+		</Project>
+	</Workspace>
+</CodeBlocks_workspace_file>
