@@ -8,7 +8,9 @@
 
 ## 编译
 
-该项目使用Visual Studio 2015 (Visual Studio 14) 编译。
+该项目在Windows下使用[Visual Studio 2015 (Visual Studio 14)](https://www.visualstudio.com/) 编译。
+
+在Linux下使用[Code::Blocks](http://www.codeblocks.org/) 编译。
 
 ## 依赖项目
 
