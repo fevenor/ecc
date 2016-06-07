@@ -39,7 +39,7 @@ ecc : libcal basefunc
 	@echo "build ecc"
 	@mkdir -p bin
 	@$(CXX) -std=c++11 -c cli/cli.cpp -o objs/cli.o
-	@$(CXX) -std=c++11 -o bin/ecc objs/cli.o -lgmp -pthread lib/basefunc.a lib/libcal.a
+	@$(CXX) -std=c++11 -o bin/ecc objs/cli.o -lgmp -pthread -lssl -lcrypto lib/basefunc.a lib/libcal.a
 	@echo "build success"
 
 clean : clean_libcal clean_basefunc clean_ecc

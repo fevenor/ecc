@@ -139,6 +139,7 @@
     <ClCompile Include="encrypt.c" />
     <ClCompile Include="get_key.c" />
     <ClCompile Include="get_rand.c" />
+    <ClCompile Include="SHA1.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

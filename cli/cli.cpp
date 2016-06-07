@@ -15,7 +15,7 @@ using namespace std;
 #if defined _MSC_VER
 extern "C" _declspec(dllimport) int get_key(const char *curve, char *privatekey, char *public_x, char *public_y);
 extern "C" _declspec(dllimport) unsigned char* ecc_encrypt(const char *curve, const char *pub_x, const char *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte);
-extern "C" _declspec(dllimport) unsigned char* ecc_decrypt(const char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte);
+extern "C" _declspec(dllimport) unsigned char* ecc_decrypt(const char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte, int *flag);
 #endif
 
 void display_help()
@@ -235,15 +235,24 @@ int main(int argc, char *argv[])
 		}
 		//解密
 		unsigned long long plaindata_length_byte;
-		unsigned char* info = ecc_decrypt(privatekey, &secret[0], secret.size(), &plaindata_length_byte);
-		//保存文件
-		if (out == "")
+		int flag;
+		unsigned char* info = ecc_decrypt(privatekey, &secret[0], secret.size(), &plaindata_length_byte, &flag);
+		if (flag == 0)
 		{
-			out = in.substr(0, in.length() - 10);
+			//保存文件
+			if (out == "")
+			{
+				out = in.substr(0, in.length() - 10);
+			}
+			ofstream outfile(out, ios::binary);
+			outfile.write((char*)info, plaindata_length_byte);
+			outfile.close();
 		}
-		ofstream outfile(out, ios::binary);
-		outfile.write((char*)info, plaindata_length_byte);
-		outfile.close();
+		else
+		{
+			cout << "私钥文件不匹配或加密数据已损坏！" << endl;
+		}
+		
 		return 0;
 	}
 	else

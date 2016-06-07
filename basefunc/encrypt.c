@@ -157,45 +157,45 @@ unsigned char* ecc_encrypt(char const *curve, char const *pub_x, char const *pub
 	}
 	//为密文分配内存
 	secret_blocklength_byte = c->length / 8;
-	secret = malloc(sizeof(unsigned char)*(blocknum*secret_blocklength_byte + 1 + c->length / 4));	//1字节的曲线编号,曲线长度/4字节的E点信息
+	secret = malloc(sizeof(unsigned char)*(blocknum*secret_blocklength_byte + 21 + c->length / 4));	//1字节的曲线编号,曲线长度/4字节的E点信息
 	cipherdata = malloc(sizeof(unsigned char *)*blocknum);
 	if (ecname == 0)
 	{
-		secret[0] = 0x00;
+		secret[20] = 0x00;
 	}
 	else if (ecname == 1)
 	{
-		secret[0] = 0x01;
+		secret[20] = 0x01;
 	}
 	else if (ecname == 2)
 	{
-		secret[0] = 0x02;
+		secret[20] = 0x02;
 	}
 	else if (ecname == 3)
 	{
-		secret[0] = 0x03;
+		secret[20] = 0x03;
 	}
 	//导出E点
 	//E的x值
 	length_diff = (c->length / 4 - (int)mpz_sizeinbase(e->x, 16)) / 2;
 	for (i = 0; i < length_diff; i++)
 	{
-		secret[1 + i] = 0x00;
+		secret[21 + i] = 0x00;
 	}
-	mpz_export(secret + 1 + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->x);
+	mpz_export(secret + 21 + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->x);
 	//E的y值
 	length_diff = (c->length / 4 - (int)mpz_sizeinbase(e->y, 16)) / 2;
 	for (i = 0; i < length_diff; i++)
 	{
-		secret[1 + i + c->length / 8] = 0x00;
+		secret[21 + i + c->length / 8] = 0x00;
 	}
-	mpz_export(secret + 1 + c->length / 8 + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->y);
+	mpz_export(secret + 21 + c->length / 8 + length_diff, NULL, 1, sizeof(unsigned char), 0, 0, e->y);
 	//定义密文块地址
 	for (i = 0; i < blocknum; i++)
 	{
-		cipherdata[i] = secret + 1 + c->length / 4 + secret_blocklength_byte*i;
+		cipherdata[i] = secret + 21 + c->length / 4 + secret_blocklength_byte*i;
 	}
-	*cipherdata_length_byte = blocknum*secret_blocklength_byte + 1 + c->length / 4;
+	*cipherdata_length_byte = blocknum*secret_blocklength_byte + 21 + c->length / 4;
 	//多线程加密处理
 #if defined _MSC_VER
 	SYSTEM_INFO siSysInfo;
@@ -334,6 +334,11 @@ unsigned char* ecc_encrypt(char const *curve, char const *pub_x, char const *pub
 		free(t[0]->cipherdata);
 		free(t[0]);
 	}
+
+	//计算SHA1
+	unsigned char hash[sha1_len];
+	SHA1(secret+20, (*cipherdata_length_byte)-20, hash);
+	memcpy(secret, hash, 20);
 
 	//释放内存
 	mpz_clear(k);

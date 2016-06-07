@@ -32,5 +32,8 @@
     <ClCompile Include="decrypt.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SHA1.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -166,7 +166,7 @@ namespace WpfGUI
         {
             try
             {
-                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 == 0) && (decryption != null))
+                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 42) % 32 == 0) && (decryption != null))
                 {
                     int encryptedlength = encryptedtextTextBox.Text.Trim().Length >> 1;
                     byte[] encrypted = new byte[encryptedlength];
@@ -175,8 +175,14 @@ namespace WpfGUI
                         encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
                     byte[] decrypted = decryption.Decrypt(encrypted);
-                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted); ;
-
+                    if (decryption.flag == 0)
+                    {
+                        decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted);
+                    }
+                    else
+                    {
+                        decryptedtextTextBox.Text = "";
+                    }
                 }
                 else
                 {
@@ -388,7 +394,7 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("密文为空！");
                     }
-                    if ((encryptedtextTextBox.Text.Trim().Length - 2) % 32 != 0)
+                    if ((encryptedtextTextBox.Text.Trim().Length - 42) % 32 != 0)
                     {
                         throw new ArgumentException("密文格式错误！");
                     }
@@ -399,7 +405,20 @@ namespace WpfGUI
                         encrypted[i] = Byte.Parse(encryptedtextTextBox.Text.Trim().Substring(i * 2, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
                     byte[] decrypted = decryption.Decrypt(encrypted);
-                    decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted);
+                    if (decryption.flag == 0)
+                    {
+                        decryptedtextTextBox.Text = Encoding.Default.GetString(decrypted);
+                        statusBar.Visibility = Visibility.Collapsed;
+                        statusBarTextBlock.Text = "";
+                        MessageBox.Show("解密完成");
+                    }
+                    else if (decryption.flag == 1)
+                    {
+                        decryptedtextTextBox.Text = "";
+                        statusBar.Visibility = Visibility.Collapsed;
+                        statusBarTextBlock.Text = "";
+                        MessageBox.Show("私钥文件不匹配或加密数据已损坏！");
+                    }
                 }
                 else if (decryptionTypeComboBox.SelectedIndex == 1)
                 {
@@ -464,10 +483,19 @@ namespace WpfGUI
         {
             try
             {
-                File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
-                statusBar.Visibility = Visibility.Collapsed;
-                statusBarTextBlock.Text = "";
-                MessageBox.Show("解密完成");
+                if (decryption.flag == 0)
+                {
+                    File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
+                    statusBar.Visibility = Visibility.Collapsed;
+                    statusBarTextBlock.Text = "";
+                    MessageBox.Show("解密完成");
+                }
+                else if (decryption.flag == 1)
+                {
+                    statusBar.Visibility = Visibility.Collapsed;
+                    statusBarTextBlock.Text = "";
+                    MessageBox.Show("私钥文件不匹配或加密数据已损坏！");
+                }
             }
             catch (Exception error)
             {
@@ -541,7 +569,7 @@ namespace WpfGUI
 
     class Encryption
     {
-        [DllImport("basefunc.dll", EntryPoint= "ecc_encrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("basefunc.dll", EntryPoint = "ecc_encrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         extern static IntPtr encrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] info, ulong info_length_byte, ref ulong cipherdata_length_byte);
 
         public string curve;
@@ -575,9 +603,10 @@ namespace WpfGUI
     class Decryption
     {
         [DllImport("basefunc.dll", EntryPoint = "ecc_decrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-        extern static IntPtr decrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPArray)] byte[] secret, ulong cipherdata_length_byte, ref ulong plaindata_length_byte);
+        extern static IntPtr decrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPArray)] byte[] secret, ulong cipherdata_length_byte, ref ulong plaindata_length_byte, ref int flag);
 
         public string privatekey;
+        public int flag = 0;
 
         public Decryption(string privatekey)
         {
@@ -586,13 +615,13 @@ namespace WpfGUI
 
         public byte[] Decrypt(byte[] encrypted)
         {
-            if ((encrypted[0] == 0x00) && (privatekey.Length != 40) || (encrypted[0] == 0x01) && (privatekey.Length != 48) || (encrypted[0] == 0x02) && (privatekey.Length != 56) || (encrypted[0] == 0x03) && (privatekey.Length != 64))
+            if ((encrypted[20] == 0x00) && (privatekey.Length != 40) || (encrypted[20] == 0x01) && (privatekey.Length != 48) || (encrypted[20] == 0x02) && (privatekey.Length != 56) || (encrypted[20] == 0x03) && (privatekey.Length != 64))
             {
                 throw new ArgumentException("私钥文件不匹配！");
             }
 
             ulong decrypteddata_length_byte = 0;
-            IntPtr temp = decrypt(privatekey, encrypted, (ulong)encrypted.Length, ref decrypteddata_length_byte);
+            IntPtr temp = decrypt(privatekey, encrypted, (ulong)encrypted.Length, ref decrypteddata_length_byte, ref flag);
             byte[] decrypted = new byte[decrypteddata_length_byte];
             Marshal.Copy(temp, decrypted, 0, (int)decrypteddata_length_byte);
             return decrypted;

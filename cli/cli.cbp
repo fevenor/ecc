@@ -50,6 +50,8 @@
 		<Linker>
 			<Add option="-lgmp" />
 			<Add option="-pthread" />
+			<Add option="-lssl" />
+			<Add option="-lcrypto" />
 			<Add library="../basefunc/libbasefunc.a" />
 			<Add library="../libcal/libcal.a" />
 		</Linker>
