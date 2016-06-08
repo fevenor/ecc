@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <iomanip>
 
 #if defined _MSC_VER								//判断visual studio环境
 #include "getopt.h"
@@ -188,7 +190,10 @@ int main(int argc, char *argv[])
 		}
 		//加密
 		unsigned long long cipherdata_length_byte;
+		auto begin_time = chrono::high_resolution_clock::now();
 		unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], info.size(), &cipherdata_length_byte);
+		auto end_time = chrono::high_resolution_clock::now();
+		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
 		//保存文件
 		if (out == "")
 		{
@@ -197,6 +202,8 @@ int main(int argc, char *argv[])
 		ofstream outfile(out, ios::binary);
 		outfile.write((char*)cipher, cipherdata_length_byte);
 		outfile.close();
+		cout << duration << "ms" << endl;
+		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(info.size() / duration) * 1000 / 1048576 << "MB/s";
 		return 0;
 	}
 	else if (!getkey_sign && !encrypt_sign && decrypt_sign)	//解密
@@ -236,7 +243,10 @@ int main(int argc, char *argv[])
 		//解密
 		unsigned long long plaindata_length_byte;
 		int flag;
+		auto begin_time = chrono::high_resolution_clock::now();
 		unsigned char* info = ecc_decrypt(privatekey, &secret[0], secret.size(), &plaindata_length_byte, &flag);
+		auto end_time = chrono::high_resolution_clock::now();
+		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
 		if (flag == 0)
 		{
 			//保存文件
@@ -247,12 +257,14 @@ int main(int argc, char *argv[])
 			ofstream outfile(out, ios::binary);
 			outfile.write((char*)info, plaindata_length_byte);
 			outfile.close();
+			cout << duration << "ms" << endl;
+			cout << setiosflags(ios::fixed) << setprecision(3) << (float)(plaindata_length_byte / duration) * 1000 / 1048576 << "MB/s";
 		}
 		else
 		{
 			cout << "私钥文件不匹配或加密数据已损坏！" << endl;
 		}
-		
+
 		return 0;
 	}
 	else

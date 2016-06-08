@@ -33,6 +33,8 @@ namespace WpfGUI
         private Decryption decryption;
         private byte[] encrypted;
         private byte[] decrypted;
+        private DateTime time1;
+        private DateTime time2;
 
         public MainWindow()
         {
@@ -249,6 +251,8 @@ namespace WpfGUI
                     byte[] plain = Encoding.Default.GetBytes(plaintextTextBox.Text);
                     byte[] cipher = encryption.Encrypt(plain);
                     ciphertextTextBox.Text = String.Concat(Array.ConvertAll(cipher, x => x.ToString("X2")));
+                    statusBar.Visibility = Visibility.Collapsed;
+                    statusBarTextBlock.Text = "";
                 }
                 //文件加密
                 else if (encryptionTypeComboBox.SelectedIndex == 1)
@@ -309,16 +313,18 @@ namespace WpfGUI
         }
         private void EncryptWorker(object sender, DoWorkEventArgs e)
         {
+            time1 = DateTime.Now;
             cipher = encryption.Encrypt(plain);
         }
         private void EncryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             try
             {
+                time2 = DateTime.Now;
                 File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
-                MessageBox.Show("加密完成");
+                MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (plain.Length / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "加密完成");
             }
             catch (Exception error)
             {
@@ -481,6 +487,7 @@ namespace WpfGUI
         }
         private void DecryptWorker(object sender, DoWorkEventArgs e)
         {
+            time1 = DateTime.Now;
             decrypted = decryption.Decrypt(encrypted);
         }
         private void DecryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -489,10 +496,11 @@ namespace WpfGUI
             {
                 if (decryption.flag == 0)
                 {
+                    time2 = DateTime.Now;
                     File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
                     statusBar.Visibility = Visibility.Collapsed;
                     statusBarTextBlock.Text = "";
-                    MessageBox.Show("解密完成");
+                    MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (decrypted.Length / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "解密完成");
                 }
                 else if (decryption.flag == 1)
                 {
