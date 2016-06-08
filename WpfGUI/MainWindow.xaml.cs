@@ -92,16 +92,20 @@ namespace WpfGUI
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "私钥文件|*.key";
             saveFileDialog.Title = "保存私钥";
-            saveFileDialog.ShowDialog();
-            newKey.SavePrivateKey(saveFileDialog.FileName);
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                newKey.SavePrivateKey(saveFileDialog.FileName);
+            }
         }
         private void SavePublicKey(object sender, RoutedEventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "公钥文件|*.pub";
             saveFileDialog.Title = "保存私钥";
-            saveFileDialog.ShowDialog();
-            newKey.SavePublicKey(saveFileDialog.FileName);
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                newKey.SavePublicKey(saveFileDialog.FileName);
+            }
         }
 
         //实时加密和解密
