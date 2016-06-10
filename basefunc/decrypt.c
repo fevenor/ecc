@@ -69,9 +69,9 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 {
 	//SHA1校验
 	unsigned char hash1[sha1_len];
-	memcpy(hash1, secret, 20);
+	memcpy(hash1, secret + 8, 20);
 	unsigned char hash2[sha1_len] = { 0 };
-	SHA1(secret + 20, cipherdata_length_byte - 20, hash2);
+	SHA1(secret + 28, cipherdata_length_byte - 28, hash2);
 
 	if (!memcmp(hash1, hash2, 20))
 	{
@@ -81,7 +81,7 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	{
 		*flag = 1;
 		*plaindata_length_byte = 0;
-		unsigned char *plain= calloc(1,sizeof(unsigned char));
+		unsigned char *plain = calloc(1, sizeof(unsigned char));
 		return plain;
 	}
 
@@ -97,19 +97,19 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	af_p *e = af_p_inits();
 	threadarg *(*t);
 	//获得曲线参数
-	if (secret[20] == 0x00)
+	if (secret[28] == 0x00)
 	{
 		ecname = 0;
 	}
-	else if (secret[20] == 0x01)
+	else if (secret[28] == 0x01)
 	{
 		ecname = 1;
 	}
-	else if (secret[20] == 0x02)
+	else if (secret[28] == 0x02)
 	{
 		ecname = 2;
 	}
-	else if (secret[20] == 0x03)
+	else if (secret[28] == 0x03)
 	{
 		ecname = 3;
 	}
@@ -117,8 +117,8 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	//导入私钥
 	mpz_init_set_str(k, key, 16);
 	//导入E点
-	mpz_import(e->x, c->length / 8, 1, sizeof(unsigned char), 0, 0, secret + 21);
-	mpz_import(e->y, c->length / 8, 1, sizeof(unsigned char), 0, 0, secret + 21 + c->length / 8);
+	mpz_import(e->x, c->length / 8, 1, sizeof(unsigned char), 0, 0, secret + 29);
+	mpz_import(e->y, c->length / 8, 1, sizeof(unsigned char), 0, 0, secret + 29 + c->length / 8);
 	//计算P=nB(kG)=k(nBG)=kPB
 	scalar_mul_w(w, k, e, p, c);
 	mpz_init(inverse_x);
@@ -130,8 +130,8 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	cipherdata = malloc(sizeof(unsigned char *)*blocknum);
 	for (i = 0; i < blocknum; i++)
 	{
-		cipherdata[i] = secret + 21 + c->length / 4 + blocklength_byte * i;
-}
+		cipherdata[i] = secret + 29 + c->length / 4 + blocklength_byte * i;
+	}
 	//为明文分配内存
 	plain_blocklength_byte = c->length / 16;
 	plain = malloc(sizeof(unsigned char)*blocknum*plain_blocklength_byte);
@@ -233,7 +233,7 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 				mpz_clear(t[i]->inverse_x);
 				free(t[i]->cipherdata);
 				free(t[i]);
-		}
+			}
 		}
 		else
 		{

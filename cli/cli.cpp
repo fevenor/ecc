@@ -4,21 +4,34 @@
 #include <vector>
 #include <chrono>
 #include <iomanip>
+#include "../basefunc/basefunc.h"
 
 #if defined _MSC_VER								//判断visual studio环境
 #include "getopt.h"
+#include <windows.h>
 #pragma comment(lib,"..\\..\\ecc\\x64\\Release\\basefunc.lib")
 #elif defined __GNUC__
 #include <getopt.h>
-#include "../basefunc/basefunc.h"
 #endif
 
 using namespace std;
-#if defined _MSC_VER
-extern "C" _declspec(dllimport) int get_key(const char *curve, char *privatekey, char *public_x, char *public_y);
-extern "C" _declspec(dllimport) unsigned char* ecc_encrypt(const char *curve, const char *pub_x, const char *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte);
-extern "C" _declspec(dllimport) unsigned char* ecc_decrypt(const char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte, int *flag);
-#endif
+//#if defined _MSC_VER
+//extern "C" _declspec(dllimport) int get_key(const char *curve, char *privatekey, char *public_x, char *public_y);
+//extern "C" _declspec(dllimport) unsigned char* ecc_encrypt(const char *curve, const char *pub_x, const char *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte);
+//extern "C" _declspec(dllimport) unsigned char* ecc_decrypt(const char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte, int *flag);
+//#endif
+
+// string转wstring
+std::wstring StringToWstring(const std::string str)
+{
+	unsigned len = str.size() * 2;// 预留字节数
+	setlocale(LC_CTYPE, "");     //必须调用此函数
+	wchar_t *p = new wchar_t[len];// 申请一段内存存放转换后的字符串
+	mbstowcs(p, str.c_str(), len);// 转换
+	std::wstring str1(p);
+	delete[] p;// 释放申请的内存
+	return str1;
+}
 
 void display_help()
 {
@@ -162,9 +175,8 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		//读取文件
-		ifstream publickeyfile(publickeyfilepath);
-		ifstream infile(in, ios::binary);
 		vector<unsigned char> info;
+		ifstream publickeyfile(publickeyfilepath);
 		if (!publickeyfile)
 		{
 			cout << "打开公钥文件错误！" << endl;
@@ -177,33 +189,86 @@ int main(int argc, char *argv[])
 			publickeyfile.getline(public_y, 65);
 			publickeyfile.close();
 		}
-		if (!infile)
+#if defined _MSC_VER
+		HANDLE infile = CreateFile(StringToWstring(in).c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		unsigned long long infilesize = GetFileSize(infile, NULL);
+		HANDLE infilemap;
+		unsigned char *infomap;
+		if (infile == INVALID_HANDLE_VALUE)
 		{
-			cout << "打开待加密文件错误！" << endl;
+			CloseHandle(infile);
+			cout << "Can't open " << in << " !";
 			return 1;
 		}
 		else
 		{
-			info.resize(infile.seekg(0, std::ios::end).tellg());
-			infile.seekg(0, std::ios::beg).read((char*)&info[0], static_cast<std::streamsize>(info.size()));
-			infile.close();
+
+			infilemap = CreateFileMapping(infile, NULL, PAGE_READONLY, 0, 0, NULL);
+			if (infilemap == INVALID_HANDLE_VALUE)
+			{
+				cout << "Can't create file mapping.Error " << GetLastError() << endl;
+				CloseHandle(infile);
+				return 1;
+			}
 		}
-		//加密
-		unsigned long long cipherdata_length_byte;
-		auto begin_time = chrono::high_resolution_clock::now();
-		unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], info.size(), &cipherdata_length_byte);
-		auto end_time = chrono::high_resolution_clock::now();
-		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
-		//保存文件
+#elif defined __GNUC__
+		ifstream infile(in, ios::binary);
+		unsigned long long infilesize = infile.seekg(0, ios::end).tellg();
+		infile.seekg(0, ios::beg);
+		if (!infile)
+		{
+			cout << "打开加密文件错误！" << endl;
+			return 1;
+		}
+#endif
 		if (out == "")
 		{
 			out = in + ".encrypted";
 		}
 		ofstream outfile(out, ios::binary);
-		outfile.write((char*)cipher, cipherdata_length_byte);
-		outfile.close();
+		if (!outfile)
+		{
+			cout << "Can't save " << out << " !";
+			return 1;
+	}
+		//加密
+		unsigned long long blockbytes = 10 * 1024 * 1024;		//10MB
+		unsigned long long fileoffset = 0;
+		unsigned long long cipherdata_length_byte;
+		info.resize(blockbytes);
+		auto begin_time = chrono::high_resolution_clock::now();
+		//分块处理
+		while (fileoffset < infilesize)
+		{
+			//映射块
+			if (infilesize - fileoffset < blockbytes)
+			{
+				blockbytes = infilesize - fileoffset;
+			}
+#if defined _MSC_VER
+			infomap = (unsigned char*)MapViewOfFile(infilemap, FILE_MAP_READ, (DWORD)(fileoffset >> 32), (DWORD)(fileoffset & 0xFFFFFFFF), blockbytes);
+			if (infomap == NULL)
+			{
+				cout << "Can't map.Error " << GetLastError() << endl;
+				return 1;
+			}
+			ReadFile(infomap, &info[0], blockbytes, NULL, NULL);
+			UnmapViewOfFile(infomap);
+			unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], blockbytes, &cipherdata_length_byte);
+#elif defined __GNUC__
+			infile.read((char*)&info[0], blockbytes);
+			unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], blockbytes, &cipherdata_length_byte);
+#endif
+			//保存文件
+			outfile.write((const char*)cipher, cipherdata_length_byte);
+			free(cipher);
+			fileoffset = fileoffset + blockbytes;
+		}
+		auto end_time = chrono::high_resolution_clock::now();
+		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
+
 		cout << duration << "ms" << endl;
-		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(info.size() / duration) * 1000 / 1048576 << "MB/s";
+		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(infilesize / duration) * 1000 / 1048576 << "MB/s";
 		return 0;
 	}
 	else if (!getkey_sign && !encrypt_sign && decrypt_sign)	//解密
@@ -217,6 +282,7 @@ int main(int argc, char *argv[])
 		//读取文件
 		ifstream privatekeyfile(privatekeyfilepath);
 		ifstream infile(in, ios::binary);
+		unsigned long long infilesize = infile.seekg(0, ios::end).tellg();
 		vector<unsigned char> secret;
 		if (!privatekeyfile)
 		{
@@ -234,37 +300,48 @@ int main(int argc, char *argv[])
 			cout << "打开加密文件错误！" << endl;
 			return 1;
 		}
-		else
+		if (out == "")
 		{
-			secret.resize(infile.seekg(0, std::ios::end).tellg());
-			infile.seekg(0, std::ios::beg).read((char*)&secret[0], static_cast<std::streamsize>(secret.size()));
-			infile.close();
+			out = in.substr(0, in.length() - 10);
+		}
+		ofstream outfile(out, ios::binary | ios::trunc);
+		if (!outfile)
+		{
+			cout << "Can't save " << out << " !";
+			return 1;
 		}
 		//解密
+		unsigned long long blockbytes = 0;
+		unsigned long long fileoffset = 0;
 		unsigned long long plaindata_length_byte;
 		int flag;
+		infile.seekg(0, ios::beg).read((char*)&blockbytes, 8);
+		secret.resize(blockbytes);
 		auto begin_time = chrono::high_resolution_clock::now();
-		unsigned char* info = ecc_decrypt(privatekey, &secret[0], secret.size(), &plaindata_length_byte, &flag);
+		//分块处理
+		infile.seekg(0, ios::beg);
+		while (fileoffset < infilesize)
+		{
+			if (infilesize - fileoffset < blockbytes)
+			{
+				blockbytes = infilesize - fileoffset;
+			}
+			infile.read((char*)&secret[0], blockbytes);
+			unsigned char* info = ecc_decrypt(privatekey, &secret[0], blockbytes, &plaindata_length_byte, &flag);
+			if (flag == 1)
+			{
+				cout << "Decrypt failed！" << endl;
+				return 1;
+			}
+			//保存文件
+			outfile.write((const char*)info, plaindata_length_byte);
+			free(info);
+			fileoffset = fileoffset + blockbytes;
+		}
 		auto end_time = chrono::high_resolution_clock::now();
 		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
-		if (flag == 0)
-		{
-			//保存文件
-			if (out == "")
-			{
-				out = in.substr(0, in.length() - 10);
-			}
-			ofstream outfile(out, ios::binary);
-			outfile.write((char*)info, plaindata_length_byte);
-			outfile.close();
-			cout << duration << "ms" << endl;
-			cout << setiosflags(ios::fixed) << setprecision(3) << (float)(plaindata_length_byte / duration) * 1000 / 1048576 << "MB/s";
-		}
-		else
-		{
-			cout << "私钥文件不匹配或加密数据已损坏！" << endl;
-		}
-
+		cout << duration << "ms" << endl;
+		cout << setiosflags(ios::fixed) << setprecision(3) << ((float)outfile.tellp() / duration) * 1000 / 1048576 << "MB/s";
 		return 0;
 	}
 	else
