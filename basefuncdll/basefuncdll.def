@@ -1,0 +1,8 @@
+LIBRARY basefuncdll
+
+EXPORTS
+get_key=?gkey@@YAHPEBDPEAD11@Z
+ecc_encrypt@text=?textencrypt@@YAPEAEPEBD00PEAE_KPEA_K@Z
+ecc_encrypt@file=?fileencrypt@@YAHPEBD0000@Z
+ecc_decrypt@text=?textdecrypt@@YAPEAEPEBDPEAE_KPEA_KPEAH@Z
+ecc_decrypt@file=?filedecrypt@@YAHPEBD00@Z

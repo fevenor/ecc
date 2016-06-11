@@ -35,6 +35,10 @@ namespace WpfGUI
         private byte[] decrypted;
         private DateTime time1;
         private DateTime time2;
+        private string inFilePath;
+        private string outFilePath;
+        private long datasize;
+        private int fileprocessresult;
 
         public MainWindow()
         {
@@ -172,7 +176,7 @@ namespace WpfGUI
         {
             try
             {
-                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 42) % 32 == 0) && (decryption != null))
+                if ((encryptedtextTextBox.Text != "") && ((encryptedtextTextBox.Text.Trim().Length - 58) % 32 == 0) && (decryption != null))
                 {
                     int encryptedlength = encryptedtextTextBox.Text.Trim().Length >> 1;
                     byte[] encrypted = new byte[encryptedlength];
@@ -277,7 +281,9 @@ namespace WpfGUI
                             throw new ArgumentException("加密文件只读，无法覆盖！");
                         }
                     }
-                    plain = File.ReadAllBytes(plainFilePathTextBox.Text);
+                    inFilePath = plainFilePathTextBox.Text;
+                    datasize = new FileInfo(inFilePath).Length;
+                    outFilePath = cipherFilePathTextBox.Text;
                     statusBarTextBlock.Text = "加密文件中...";
 
                     if (encryptworker.IsBusy != true)
@@ -314,21 +320,29 @@ namespace WpfGUI
         private void EncryptWorker(object sender, DoWorkEventArgs e)
         {
             time1 = DateTime.Now;
-            cipher = encryption.Encrypt(plain);
+            fileprocessresult = -1;
+            fileprocessresult = encryption.Encrypt(inFilePath, outFilePath);
         }
         private void EncryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            try
+            if (fileprocessresult == 0)
             {
                 time2 = DateTime.Now;
-                File.WriteAllBytes(cipherFilePathTextBox.Text, cipher);
                 statusBar.Visibility = Visibility.Collapsed;
                 statusBarTextBlock.Text = "";
-                MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (plain.Length / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "加密完成");
+                MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (datasize / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "加密完成");
             }
-            catch (Exception error)
+            else if (fileprocessresult == 1)
             {
-                MessageBox.Show(error.ToString());
+                MessageBox.Show("打开文件错误！");
+            }
+            else if (fileprocessresult == 2)
+            {
+                MessageBox.Show("保存文件错误！");
+            }
+            else
+            {
+                MessageBox.Show("发生未知错误！");
             }
         }
         private void GetPlainFilePath(object sender, RoutedEventArgs e)
@@ -404,7 +418,7 @@ namespace WpfGUI
                     {
                         throw new ArgumentException("密文为空！");
                     }
-                    if ((encryptedtextTextBox.Text.Trim().Length - 42) % 32 != 0)
+                    if ((encryptedtextTextBox.Text.Trim().Length - 58) % 32 != 0)
                     {
                         throw new ArgumentException("密文格式错误！");
                     }
@@ -451,7 +465,9 @@ namespace WpfGUI
                             throw new ArgumentException("解密文件只读，无法覆盖！");
                         }
                     }
-                    encrypted = File.ReadAllBytes(encryptedFilePathTextBox.Text);
+                    inFilePath = encryptedFilePathTextBox.Text;
+                    outFilePath = decryptedFilePathTextBox.Text;
+                    datasize = 0;
                     statusBarTextBlock.Text = "解密文件中...";
 
                     if (decryptworker.IsBusy != true)
@@ -488,30 +504,34 @@ namespace WpfGUI
         private void DecryptWorker(object sender, DoWorkEventArgs e)
         {
             time1 = DateTime.Now;
-            decrypted = decryption.Decrypt(encrypted);
+            fileprocessresult = -1;
+            fileprocessresult = decryption.Decrypt(inFilePath, outFilePath);
         }
         private void DecryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            try
+            if (fileprocessresult == 0)
             {
-                if (decryption.flag == 0)
-                {
-                    time2 = DateTime.Now;
-                    File.WriteAllBytes(decryptedFilePathTextBox.Text, decrypted);
-                    statusBar.Visibility = Visibility.Collapsed;
-                    statusBarTextBlock.Text = "";
-                    MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (decrypted.Length / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "解密完成");
-                }
-                else if (decryption.flag == 1)
-                {
-                    statusBar.Visibility = Visibility.Collapsed;
-                    statusBarTextBlock.Text = "";
-                    MessageBox.Show("私钥文件不匹配或加密数据已损坏！");
-                }
+                time2 = DateTime.Now;
+                datasize = new FileInfo(outFilePath).Length;
+                statusBar.Visibility = Visibility.Collapsed;
+                statusBarTextBlock.Text = "";
+                MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (datasize / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "解密完成");
             }
-            catch (Exception error)
+            else if (fileprocessresult == 1)
             {
-                MessageBox.Show(error.ToString());
+                MessageBox.Show("打开加密文件错误！");
+            }
+            else if (fileprocessresult == 2)
+            {
+                MessageBox.Show("保存文件错误！");
+            }
+            else if (fileprocessresult == 2)
+            {
+                MessageBox.Show("解密失败！");
+            }
+            else
+            {
+                MessageBox.Show("发生未知错误！");
             }
         }
         private void GetEncryptedFilePath(object sender, RoutedEventArgs e)
@@ -544,7 +564,7 @@ namespace WpfGUI
 
     class Key
     {
-        [DllImport("basefunc.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("basefunc.dll", EntryPoint = "get_key", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         extern static int get_key([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] StringBuilder privatekey, [MarshalAs(UnmanagedType.LPStr)] StringBuilder public_x, [MarshalAs(UnmanagedType.LPStr)] StringBuilder public_y);
 
         public String curvename { get; private set; }
@@ -581,8 +601,10 @@ namespace WpfGUI
 
     class Encryption
     {
-        [DllImport("basefunc.dll", EntryPoint = "ecc_encrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-        extern static IntPtr encrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] info, ulong info_length_byte, ref ulong cipherdata_length_byte);
+        [DllImport("basefunc.dll", EntryPoint = "ecc_encrypt@text", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        extern static IntPtr textencrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] info, ulong info_length_byte, ref ulong cipherdata_length_byte);
+        [DllImport("basefunc.dll", EntryPoint = "ecc_encrypt@file", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        extern static int fileencrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPStr)] string infile, [MarshalAs(UnmanagedType.LPStr)] string outfile);
 
         public string curve;
         public string pub_x;
@@ -605,17 +627,24 @@ namespace WpfGUI
         public byte[] Encrypt(byte[] plain)
         {
             ulong cipherdata_length_byte = 0;
-            IntPtr temp = encrypt(curve, pub_x, pub_y, plain, (ulong)plain.Length, ref cipherdata_length_byte);
+            IntPtr temp = textencrypt(curve, pub_x, pub_y, plain, (ulong)plain.Length, ref cipherdata_length_byte);
             byte[] cipher = new byte[cipherdata_length_byte];
             Marshal.Copy(temp, cipher, 0, (int)cipherdata_length_byte);
+            Marshal.FreeHGlobal(temp);
             return cipher;
+        }
+        public int Encrypt(string infile, string outfile)
+        {
+            return fileencrypt(curve, pub_x, pub_y, infile, outfile);
         }
     }
 
     class Decryption
     {
-        [DllImport("basefunc.dll", EntryPoint = "ecc_decrypt", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-        extern static IntPtr decrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPArray)] byte[] secret, ulong cipherdata_length_byte, ref ulong plaindata_length_byte, ref int flag);
+        [DllImport("basefunc.dll", EntryPoint = "ecc_decrypt@text", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        extern static IntPtr textdecrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPArray)] byte[] secret, ulong cipherdata_length_byte, ref ulong plaindata_length_byte, ref int flag);
+        [DllImport("basefunc.dll", EntryPoint = "ecc_decrypt@file", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        extern static int filedecrypt([MarshalAs(UnmanagedType.LPStr)] string key, [MarshalAs(UnmanagedType.LPStr)] string infile, [MarshalAs(UnmanagedType.LPStr)] string outfile);
 
         public string privatekey;
         public int flag = 0;
@@ -633,10 +662,15 @@ namespace WpfGUI
             }
 
             ulong decrypteddata_length_byte = 0;
-            IntPtr temp = decrypt(privatekey, encrypted, (ulong)encrypted.Length, ref decrypteddata_length_byte, ref flag);
+            IntPtr temp = textdecrypt(privatekey, encrypted, (ulong)encrypted.Length, ref decrypteddata_length_byte, ref flag);
             byte[] decrypted = new byte[decrypteddata_length_byte];
             Marshal.Copy(temp, decrypted, 0, (int)decrypteddata_length_byte);
+            Marshal.FreeHGlobal(temp);
             return decrypted;
+        }
+        public int Decrypt(string infile, string outfile)
+        {
+            return filedecrypt(privatekey, infile, outfile);
         }
     }
 }

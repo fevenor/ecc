@@ -97,7 +97,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Release\basefunc.dll">
+    <Content Include="..\x64\Release\basefuncdll.dll">
       <Link>basefunc.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
