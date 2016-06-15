@@ -103,7 +103,8 @@ void scalar_mul_w(int w, mpz_t k, af_p *p, af_p *q, group *c)
 		}
 		else
 		{
-			point_add(c->p, temp, pre_p[0], temp);							//虚操作
+			if (i % 2 == 0)
+				point_add(c->p, temp, pre_p[0], temp);							//虚操作
 		}
 	}
 
@@ -194,7 +195,8 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 		}
 		else
 		{
-			point_add(c->p, temp, pre_p[0][1], temp);							//虚操作
+			if (i % 2 == 0)
+				point_add(c->p, temp, pre_p[0][1], temp);							//虚操作
 		}
 		if (n1 != 0)
 		{
@@ -202,7 +204,8 @@ void scalar_mul_c(mpz_t k, af_p *q, enum curve_name ecname)
 		}
 		else
 		{
-			point_add(c->p, temp, pre_p[1][1], temp);							//虚操作
+			if (i % 2 == 0)
+				point_add(c->p, temp, pre_p[1][1], temp);							//虚操作
 		}
 	}
 
