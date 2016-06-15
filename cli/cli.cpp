@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 			return 1;
 	}
 		//加密
-		unsigned long long blockbytes = 10 * 1024 * 1024;		//10MB
+		unsigned long long blockbytes = 100 * 1024 * 1024;		//100MB
 		unsigned long long fileoffset = 0;
 		unsigned long long cipherdata_length_byte;
 		info.resize(blockbytes);
