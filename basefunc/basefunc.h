@@ -7,7 +7,11 @@
 #pragma comment(lib,"..\\x64\\Release\\libcal.lib")	//基础运算库
 #endif
 
-
+#ifdef __cplusplus
+extern "C" { int get_key(char *curve, char *privatekey, char *public_x, char *public_y); }
+extern "C" { unsigned char* encrypt(char *curve, char *pub_x, char *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte); }
+extern "C" { unsigned char* decrypt(char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte); }
+#else
 //获得指定长度的随机数k
 extern void get_rand(int length, mpz_t k);
 //由曲线生成密钥
@@ -20,3 +24,4 @@ extern _declspec(dllexport) unsigned char* encrypt(char *curve, char *pub_x, cha
 //解密模块
 //参数:私钥、待解密信息、密文长度、明文长度
 extern _declspec(dllexport) unsigned char* decrypt(char *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte);
+#endif

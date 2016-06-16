@@ -12,6 +12,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basefunc", "basefunc\basefu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfGUI", "WpfGUI\WpfGUI.csproj", "{C4F00145-82D5-4309-93C7-A7A5638756E2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "speedtest", "speedtest\speedtest.vcxproj", "{CBD97E79-41AF-4A49-96D2-8315D107BEC4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{299134B6-ED1A-497A-B526-F884BBC684AF} = {299134B6-ED1A-497A-B526-F884BBC684AF}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +59,16 @@ Global
 		{C4F00145-82D5-4309-93C7-A7A5638756E2}.Release|x64.Build.0 = Release|Any CPU
 		{C4F00145-82D5-4309-93C7-A7A5638756E2}.Release|x86.ActiveCfg = Release|Any CPU
 		{C4F00145-82D5-4309-93C7-A7A5638756E2}.Release|x86.Build.0 = Release|Any CPU
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Debug|x64.ActiveCfg = Debug|x64
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Debug|x64.Build.0 = Debug|x64
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Debug|x86.ActiveCfg = Debug|Win32
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Debug|x86.Build.0 = Debug|Win32
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Release|Any CPU.ActiveCfg = Release|Win32
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Release|x64.ActiveCfg = Release|x64
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Release|x64.Build.0 = Release|x64
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Release|x86.ActiveCfg = Release|Win32
+		{CBD97E79-41AF-4A49-96D2-8315D107BEC4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
