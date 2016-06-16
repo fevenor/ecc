@@ -9,7 +9,11 @@
 #if defined _MSC_VER								//判断visual studio环境
 #include "getopt.h"
 #include <windows.h>
-#pragma comment(lib,"..\\..\\ecc\\x64\\Release\\basefunc.lib")
+#if defined _DEBUG
+#pragma comment(lib,"..\\x64\\Debug\\basefunc.lib")
+#else
+#pragma comment(lib,"..\\x64\\Release\\basefunc.lib")
+#endif
 #elif defined __GNUC__
 #include <getopt.h>
 #endif
@@ -230,7 +234,7 @@ int main(int argc, char *argv[])
 		{
 			cout << "Can't save " << out << " !";
 			return 1;
-	}
+		}
 		//加密
 		unsigned long long blockbytes = 100 * 1024 * 1024;		//100MB
 		unsigned long long fileoffset = 0;
@@ -268,7 +272,7 @@ int main(int argc, char *argv[])
 		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
 
 		cout << duration << "ms" << endl;
-		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(infilesize / duration) * 1000 / 1048576 << "MB/s";
+		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(infilesize / duration) * 1000 / 1048576 << "MB/s" << endl;
 		return 0;
 	}
 	else if (!getkey_sign && !encrypt_sign && decrypt_sign)	//解密
@@ -341,7 +345,7 @@ int main(int argc, char *argv[])
 		auto end_time = chrono::high_resolution_clock::now();
 		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
 		cout << duration << "ms" << endl;
-		cout << setiosflags(ios::fixed) << setprecision(3) << ((float)outfile.tellp() / duration) * 1000 / 1048576 << "MB/s";
+		cout << setiosflags(ios::fixed) << setprecision(3) << ((float)outfile.tellp() / duration) * 1000 / 1048576 << "MB/s" << endl;
 		return 0;
 	}
 	else

@@ -6,7 +6,13 @@
 #include <windows.h>
 #include <process.h>
 #pragma comment(lib, "..\\mpir\\mpir.lib")	//MPIR静态链接库
+
+#if defined _DEBUG
+#pragma comment(lib,"..\\x64\\Debug\\libcal.lib")
+#else
 #pragma comment(lib,"..\\x64\\Release\\libcal.lib")	//基础运算库
+#endif
+
 //计算SHA1
 void SHA1(unsigned char *info, unsigned long long info_length_byte, unsigned char *hash);
 #elif defined __GNUC__					//在linux下

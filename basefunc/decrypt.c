@@ -60,7 +60,7 @@ void decrypt_thread(threadarg *t)
 
 	//释放内存
 	mpz_clear(m);
-	free(temp);
+	//free(temp);
 }
 
 
