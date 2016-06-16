@@ -30,7 +30,7 @@ unsigned char* encrypttest(char *curve, char *pub_x, char *pub_y, unsigned char 
 	for (int i = 1; i <= 4; i++)
 	{
 		free(cipher);
-		cout << i << "st time encrypt:\t";
+		cout << i << "th time encrypt:\t";
 		auto begin_time = chrono::high_resolution_clock::now();
 		cipher = encrypt(curve, pub_x, pub_y, info, info_length_byte, cipherdata_length_byte);
 		auto end_time = chrono::high_resolution_clock::now();
@@ -39,6 +39,21 @@ unsigned char* encrypttest(char *curve, char *pub_x, char *pub_y, unsigned char 
 		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(info_length_byte / duration) * 1000 / 1024 << "KB/s" << endl;
 	}
 	return cipher;
+}
+
+void decrypttest(char *key, unsigned char *secret, unsigned long long cipherdata_length_byte)
+{
+	unsigned long long plaindata_length_byte = 0;
+	for (int i = 1; i <= 4; i++)
+	{
+		cout << i << "th time decrypt:\t";
+		auto begin_time = chrono::high_resolution_clock::now();
+		decrypt(key, secret, cipherdata_length_byte, &plaindata_length_byte);
+		auto end_time = chrono::high_resolution_clock::now();
+		auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - begin_time).count();
+		cout << duration << "ms\t";
+		cout << setiosflags(ios::fixed) << setprecision(3) << (float)(plaindata_length_byte / duration) * 1000 / 1024 << "KB/s" << endl;
+	}
 }
 
 
@@ -68,7 +83,9 @@ int main()
 	{
 		cout << curvename[i].c_str() << endl;
 		BYTE* data = getrandomdata(size[i]);
-		encrypttest((char*)curvename[i].c_str(), public_x[i], public_y[i], data, (unsigned long long)size[i], &cipherdata_length_byte);
+		unsigned char* cipher=encrypttest((char*)curvename[i].c_str(), public_x[i], public_y[i], data, (unsigned long long)size[i], &cipherdata_length_byte);
+		decrypttest(privatekey[i], cipher, cipherdata_length_byte);
+		delete[] cipher;
 		delete[] data;
 		cout << endl;
 	}
