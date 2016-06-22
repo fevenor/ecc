@@ -198,29 +198,6 @@ int main(int argc, char *argv[])
 			cout << "公钥错误！" << endl;
 			return 1;
 		}
-#if defined _MSC_VER
-		HANDLE infile = CreateFile(StringToWstring(in).c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		unsigned long long infilesize = GetFileSize(infile, NULL);
-		HANDLE infilemap;
-		unsigned char *infomap;
-		if (infile == INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(infile);
-			cout << "Can't open " << in << " !";
-			return 1;
-		}
-		else
-		{
-
-			infilemap = CreateFileMapping(infile, NULL, PAGE_READONLY, 0, 0, NULL);
-			if (infilemap == INVALID_HANDLE_VALUE)
-			{
-				cout << "Can't create file mapping.Error " << GetLastError() << endl;
-				CloseHandle(infile);
-				return 1;
-			}
-		}
-#elif defined __GNUC__
 		ifstream infile(in, ios::binary);
 		unsigned long long infilesize = infile.seekg(0, ios::end).tellg();
 		infile.seekg(0, ios::beg);
@@ -229,7 +206,6 @@ int main(int argc, char *argv[])
 			cout << "打开加密文件错误！" << endl;
 			return 1;
 		}
-#endif
 		if (out == "")
 		{
 			out = in + ".encrypted";
@@ -254,20 +230,8 @@ int main(int argc, char *argv[])
 			{
 				blockbytes = infilesize - fileoffset;
 			}
-#if defined _MSC_VER
-			infomap = (unsigned char*)MapViewOfFile(infilemap, FILE_MAP_READ, (DWORD)(fileoffset >> 32), (DWORD)(fileoffset & 0xFFFFFFFF), blockbytes);
-			if (infomap == NULL)
-			{
-				cout << "Can't map.Error " << GetLastError() << endl;
-				return 1;
-			}
-			ReadFile(infomap, &info[0], blockbytes, NULL, NULL);
-			UnmapViewOfFile(infomap);
-			unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], blockbytes, &cipherdata_length_byte);
-#elif defined __GNUC__
 			infile.read((char*)&info[0], blockbytes);
 			unsigned char* cipher = ecc_encrypt(curvename.c_str(), public_x, public_y, &info[0], blockbytes, &cipherdata_length_byte);
-#endif
 			//保存文件
 			outfile.write((const char*)cipher, cipherdata_length_byte);
 			free(cipher);

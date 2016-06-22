@@ -623,6 +623,7 @@ namespace WpfGUI
 
         public Encryption(string publickey)
         {
+            publickey = publickey.Replace("\r\n", "\n");
             string[] publickeys = publickey.Split('\n');
 
             curve = publickeys[0];
@@ -664,6 +665,7 @@ namespace WpfGUI
 
         public Decryption(string privatekey)
         {
+            privatekey = privatekey.Replace("\r\n", "\n");
             this.privatekey = privatekey.Split('\n')[1];
         }
 
