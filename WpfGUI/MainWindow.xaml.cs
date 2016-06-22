@@ -137,7 +137,7 @@ namespace WpfGUI
         {
             try
             {
-                if ((plaintextTextBox.Text != "") && (encryption != null))
+                if ((plaintextTextBox.Text != "") && (encryption != null) && (encryption.flag == 0))
                 {
                     byte[] plain = Encoding.Default.GetBytes(plaintextTextBox.Text);
                     byte[] cipher = encryption.Encrypt(plain);
@@ -245,6 +245,10 @@ namespace WpfGUI
                 statusBar.Visibility = Visibility.Visible;
                 statusBarTextBlock.Text = "读取公钥文件";
                 encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
+                if (encryption.flag == 1)
+                {
+                    throw new ArgumentException("公钥错误！");
+                }
                 //文本加密
                 if (encryptionTypeComboBox.SelectedIndex == 0)
                 {
@@ -339,6 +343,10 @@ namespace WpfGUI
             else if (fileprocessresult == 2)
             {
                 MessageBox.Show("保存文件错误！");
+            }
+            else if (fileprocessresult == 3)
+            {
+                MessageBox.Show("公钥错误！");
             }
             else
             {
@@ -605,10 +613,13 @@ namespace WpfGUI
         extern static IntPtr textencrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] info, ulong info_length_byte, ref ulong cipherdata_length_byte);
         [DllImport("basefunc.dll", EntryPoint = "ecc_encrypt@file", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         extern static int fileencrypt([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y, [MarshalAs(UnmanagedType.LPStr)] string infile, [MarshalAs(UnmanagedType.LPStr)] string outfile);
+        [DllImport("basefunc.dll", EntryPoint = "wpoc", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        extern static int whetherpointisoncurve([MarshalAs(UnmanagedType.LPStr)] string curve, [MarshalAs(UnmanagedType.LPStr)] string pub_x, [MarshalAs(UnmanagedType.LPStr)] string pub_y);
 
         public string curve;
         public string pub_x;
         public string pub_y;
+        public int flag = 1;
 
         public Encryption(string publickey)
         {
@@ -617,12 +628,14 @@ namespace WpfGUI
             curve = publickeys[0];
             pub_x = publickeys[1];
             pub_y = publickeys[2];
+            flag = whetherpointisoncurve(curve, pub_x, pub_y);
         }
         public Encryption(string curve, string pub_x, string pub_y)
         {
             this.curve = curve;
             this.pub_x = pub_x;
             this.pub_y = pub_y;
+            flag = whetherpointisoncurve(curve, pub_x, pub_y);
         }
         public byte[] Encrypt(byte[] plain)
         {

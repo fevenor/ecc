@@ -26,11 +26,15 @@ extern void get_rand(int length, mpz_t k);
 
 #ifdef __cplusplus
 extern "C" { int get_key(char const *curve, char *privatekey, char *public_x, char *public_y); }
+extern  "C" { int wpoc(char const *curve, char const *public_x, char const *public_y); }
 extern "C" { unsigned char* ecc_encrypt(char const *curve, char const *pub_x, char const *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte); }
 extern "C" { unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long long cipherdata_length_byte, unsigned long long *plaindata_length_byte, int *flag); }
 #else
 //由曲线生成密钥
 extern int get_key(char const *curve, char *privatekey, char *public_x, char *public_y);
+
+//判断公钥是否在曲线上
+extern int wpoc(char const *curve, char const *public_x, char const *public_y);
 
 //加密模块
 //参数:曲线名、公钥x、公钥y、待加密信息、信息长度、密文长度

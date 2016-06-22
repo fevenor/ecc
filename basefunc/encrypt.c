@@ -29,6 +29,48 @@ typedef struct
 	unsigned char *(*cipherdata);
 }threadarg;
 
+
+//判断公钥是否在曲线上
+int wpoc(char const *curve, char const *public_x, char const *public_y)
+{
+	int flag;
+	enum curve_name ecname;
+	af_p *pubp = af_p_inits();
+	//获得曲线参数
+	c = group_inits();
+	if (strcmp(curve, "secp160r2") == 0)
+	{
+		ecname = 0;
+	}
+	else if (strcmp(curve, "secp192r1") == 0)
+	{
+		ecname = 1;
+	}
+	else if (strcmp(curve, "secp224r1") == 0)
+	{
+		ecname = 2;
+	}
+	else if (strcmp(curve, "secp256r1") == 0)
+	{
+		ecname = 3;
+	}
+	get_curve_parameters(ecname, c);
+	//导入公钥
+	mpz_set_str(pubp->x, public_x, 16);
+	mpz_set_str(pubp->y, public_y, 16);
+	if (point_is_on_curve(c, pubp))
+	{
+		flag = 0;
+	}
+	else
+	{
+		flag = 1;
+	}
+	group_clears(c);
+	af_p_clears(pubp);
+	return flag;
+}
+
 //加密线程
 void encrypt_thread(threadarg *t)
 {
@@ -310,7 +352,7 @@ unsigned char* ecc_encrypt(char const *curve, char const *pub_x, char const *pub
 
 		}
 		free(threadsignal);
-	}
+			}
 	else
 	{
 		t = malloc(sizeof(threadarg*));
@@ -354,4 +396,4 @@ unsigned char* ecc_encrypt(char const *curve, char const *pub_x, char const *pub
 	free(cipherdata);
 	free(t);
 	return secret;
-}
+		}

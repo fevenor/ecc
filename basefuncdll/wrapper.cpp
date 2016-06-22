@@ -8,6 +8,11 @@ int gkey(char const *curve, char *privatekey, char *public_x, char *public_y)
 	return get_key(curve, privatekey, public_x, public_y);
 }
 
+extern _declspec(dllexport) int whetherpoc(char const *curve, char const *public_x, char const *public_y)
+{
+	return wpoc(curve, public_x, public_y);
+}
+
 unsigned char* textencrypt(char const *curve, char const *pub_x, char const *pub_y, unsigned char *info, unsigned long long info_length_byte, unsigned long long *cipherdata_length_byte)
 {
 	return ecc_encrypt(curve, pub_x, pub_y, info, info_length_byte, cipherdata_length_byte);
@@ -25,6 +30,11 @@ int fileencrypt(char const *curve, char const *pub_x, char const *pub_y, char co
 	{
 		//打开文件错误!
 		return 1;
+	}
+	if (wpoc(curve, pub_x, pub_y))
+	{
+		//公钥错误!
+		return 3;
 	}
 	ofstream outfile(out, ios::binary);
 	if (!outfile)

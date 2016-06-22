@@ -193,6 +193,11 @@ int main(int argc, char *argv[])
 			publickeyfile.getline(public_y, 65);
 			publickeyfile.close();
 		}
+		if (wpoc(curvename.c_str(), public_x, public_y))
+		{
+			cout << "公钥错误！" << endl;
+			return 1;
+		}
 #if defined _MSC_VER
 		HANDLE infile = CreateFile(StringToWstring(in).c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		unsigned long long infilesize = GetFileSize(infile, NULL);
