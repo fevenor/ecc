@@ -28,11 +28,7 @@ namespace WpfGUI
         private BackgroundWorker decryptworker;
         private Key newKey;
         private Encryption encryption;
-        private byte[] plain;
-        private byte[] cipher;
         private Decryption decryption;
-        private byte[] encrypted;
-        private byte[] decrypted;
         private DateTime time1;
         private DateTime time2;
         private string inFilePath;
@@ -123,6 +119,10 @@ namespace WpfGUI
                 {
                     encryption = new Encryption(File.ReadAllText(publicKeyFilePathTextBox.Text));
                 }
+                else
+                {
+                    encryption = null;
+                }
             }
             catch (FileNotFoundException)
             {
@@ -161,6 +161,10 @@ namespace WpfGUI
                 if (privateKeyFilePathTextBox.Text != "")
                 {
                     decryption = new Decryption(File.ReadAllText(privateKeyFilePathTextBox.Text));
+                }
+                else
+                {
+                    decryption = null;
                 }
             }
             catch (FileNotFoundException)
@@ -261,6 +265,7 @@ namespace WpfGUI
                     ciphertextTextBox.Text = String.Concat(Array.ConvertAll(cipher, x => x.ToString("X2")));
                     statusBar.Visibility = Visibility.Collapsed;
                     statusBarTextBlock.Text = "";
+                    encryption = null;
                 }
                 //文件加密
                 else if (encryptionTypeComboBox.SelectedIndex == 1)
@@ -326,6 +331,7 @@ namespace WpfGUI
             time1 = DateTime.Now;
             fileprocessresult = -1;
             fileprocessresult = encryption.Encrypt(inFilePath, outFilePath);
+            encryption = null;
         }
         private void EncryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -449,8 +455,16 @@ namespace WpfGUI
                         decryptedtextTextBox.Text = "";
                         statusBar.Visibility = Visibility.Collapsed;
                         statusBarTextBlock.Text = "";
-                        MessageBox.Show("私钥文件不匹配或加密数据已损坏！");
+                        MessageBox.Show("加密数据已损坏！");
                     }
+                    else if (decryption.flag == 2)
+                    {
+                        decryptedtextTextBox.Text = "";
+                        statusBar.Visibility = Visibility.Collapsed;
+                        statusBarTextBlock.Text = "";
+                        MessageBox.Show("私钥文件不匹配！");
+                    }
+                    decryption = null;
                 }
                 else if (decryptionTypeComboBox.SelectedIndex == 1)
                 {
@@ -514,6 +528,7 @@ namespace WpfGUI
             time1 = DateTime.Now;
             fileprocessresult = -1;
             fileprocessresult = decryption.Decrypt(inFilePath, outFilePath);
+            decryption = null;
         }
         private void DecryptWorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -534,6 +549,10 @@ namespace WpfGUI
             else if (fileprocessresult == 3)
             {
                 MessageBox.Show("解密文件受损，解密失败！");
+            }
+            else if (fileprocessresult == 4)
+            {
+                MessageBox.Show("私钥错误！");
             }
             else
             {

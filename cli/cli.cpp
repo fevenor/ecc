@@ -306,6 +306,11 @@ int main(int argc, char *argv[])
 				cout << "Decrypt failed！" << endl;
 				return 1;
 			}
+			if (flag == 2)
+			{
+				cout << "私钥错误！" << endl;
+				return 1;
+			}
 			//保存文件
 			outfile.write((const char*)info, plaindata_length_byte);
 			free(info);

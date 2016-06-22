@@ -277,7 +277,16 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	}
 
 	memcpy(plaindata_length_byte, plain, 8);
-	memmove(plain, plain + 8, sizeof(unsigned char)*(*plaindata_length_byte));
+	if (*plaindata_length_byte > blocknum*plain_blocklength_byte)
+	{
+		*flag = 2;
+		*plaindata_length_byte = 0;
+		unsigned char *plain = calloc(1, sizeof(unsigned char));
+	}
+	else
+	{
+		memmove(plain, plain + 8, sizeof(unsigned char)*(*plaindata_length_byte));
+	}
 
 	//释放内存
 	mpz_clear(k);

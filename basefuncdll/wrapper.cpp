@@ -112,6 +112,11 @@ int filedecrypt(char const *key, char const *in, char const *out)
 			//Decrypt failed!
 			return 3;
 		}
+		if (flag == 2)
+		{
+			//Ë½Ô¿´íÎó!
+			return 4;
+		}
 		//±£´æÎÄ¼ş
 		outfile.write((const char*)info, plaindata_length_byte);
 		free(info);
