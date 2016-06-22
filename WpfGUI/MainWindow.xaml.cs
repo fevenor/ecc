@@ -350,7 +350,7 @@ namespace WpfGUI
             }
             else
             {
-                MessageBox.Show("发生未知错误！");
+                MessageBox.Show("发生未知错误！\n" + "错误代码：" + fileprocessresult);
             }
         }
         private void GetPlainFilePath(object sender, RoutedEventArgs e)
@@ -521,8 +521,6 @@ namespace WpfGUI
             {
                 time2 = DateTime.Now;
                 datasize = new FileInfo(outFilePath).Length;
-                statusBar.Visibility = Visibility.Collapsed;
-                statusBarTextBlock.Text = "";
                 MessageBox.Show("耗时:" + (time2 - time1).ToString("c").Substring(0, 11) + "\n" + "速度:" + (datasize / (time2 - time1).TotalSeconds / 1048576).ToString("f3") + "MB/s" + "\n" + "解密完成");
             }
             else if (fileprocessresult == 1)
@@ -531,16 +529,18 @@ namespace WpfGUI
             }
             else if (fileprocessresult == 2)
             {
-                MessageBox.Show("保存文件错误！");
+                MessageBox.Show("无法保存解密文件！");
             }
-            else if (fileprocessresult == 2)
+            else if (fileprocessresult == 3)
             {
-                MessageBox.Show("解密失败！");
+                MessageBox.Show("解密文件受损，解密失败！");
             }
             else
             {
-                MessageBox.Show("发生未知错误！");
+                MessageBox.Show("发生未知错误！\n" + "错误代码：" + fileprocessresult);
             }
+            statusBar.Visibility = Visibility.Collapsed;
+            statusBarTextBlock.Text = "";
         }
         private void GetEncryptedFilePath(object sender, RoutedEventArgs e)
         {
