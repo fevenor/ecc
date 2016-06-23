@@ -113,6 +113,13 @@ unsigned char* ecc_decrypt(char const *key, unsigned char *secret, unsigned long
 	{
 		ecname = 3;
 	}
+	else
+	{
+		*flag = 1;
+		*plaindata_length_byte = 0;
+		unsigned char *plain = calloc(1, sizeof(unsigned char));
+		return plain;
+	}
 	get_curve_parameters(ecname, c);
 	//导入私钥
 	mpz_init_set_str(k, key, 16);

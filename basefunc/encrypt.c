@@ -54,6 +54,11 @@ int wpoc(char const *curve, char const *public_x, char const *public_y)
 	{
 		ecname = 3;
 	}
+	else
+	{
+		flag = 1;
+		return flag;
+	}
 	get_curve_parameters(ecname, c);
 	//导入公钥
 	mpz_set_str(pubp->x, public_x, 16);
